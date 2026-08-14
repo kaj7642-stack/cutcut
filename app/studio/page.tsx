@@ -13,6 +13,7 @@ import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts";
 import { VideoThumbnail } from "@/components/video-thumbnail";
 import { saveDraft, loadDraft, clearDraft, type DraftData } from "@/lib/draft-storage";
 import { RenderProgress } from "@/components/render-progress";
+import { ClipPreviewModal } from "@/components/clip-preview-modal";
 
 interface AuthUser {
   id: number;
@@ -75,6 +76,7 @@ export default function StudioPage() {
   const [includeStt, setIncludeStt] = useState(true);
   const [renderQuality, setRenderQuality] = useState<RenderQuality>("high");
   const [hasDraft, setHasDraft] = useState(false);
+  const [previewClipId, setPreviewClipId] = useState<string | null>(null);
 
   const analyzeVideo = useCallback(async (pid: string, vpath: string) => {
     setStatus("detecting_spikes");
@@ -478,6 +480,7 @@ export default function StudioPage() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (previewClipId) return;
       if (e.key === "Escape") {
         if (status === "rendering") {
           handleCancelRender();
@@ -488,7 +491,7 @@ export default function StudioPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [status, resultUrl]);
+  }, [status, resultUrl, previewClipId]);
 
   useEffect(() => {
     const processing = ["uploading", "downloading", "extracting_audio", "detecting_spikes", "cutting_clips", "generating_scripts", "generating_tts", "rendering"].includes(status);
@@ -900,10 +903,18 @@ export default function StudioPage() {
                 <div className="flex gap-4 p-4">
                   {/* Video Preview */}
                   <div className="shrink-0 flex flex-col items-center gap-1">
-                    <VideoThumbnail
-                      src={`/api/clips/${projectId}/${clip.file}`}
-                      className="w-48 h-28 object-cover rounded-lg"
-                    />
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => setPreviewClipId(clip.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === "Enter") setPreviewClipId(clip.id); }}
+                    >
+                      <VideoThumbnail
+                        src={`/api/clips/${projectId}/${clip.file}`}
+                        className="w-48 h-28 object-cover rounded-lg hover:opacity-80 transition-opacity"
+                      />
+                    </div>
                     {outputMode === "longform" && clip.selected && (
                       <div className="flex gap-1">
                         <button
@@ -1174,6 +1185,32 @@ export default function StudioPage() {
           </div>
         </>
       )}
+
+      {/* Clip Preview Modal */}
+      {previewClipId && (() => {
+        const previewIdx = clips.findIndex((c) => c.id === previewClipId);
+        const previewClip = clips[previewIdx];
+        if (!previewClip) return null;
+        return (
+          <ClipPreviewModal
+            clip={previewClip}
+            projectId={projectId}
+            totalClips={clips.length}
+            sttSegments={sttResults[previewClip.id]}
+            narrationText={drafts.find((d) => d.clip_id === previewClip.id)?.text}
+            onClose={() => setPreviewClipId(null)}
+            onToggleSelect={toggleClip}
+            onUpdateMemo={updateMemo}
+            onNavigate={(dir) => {
+              const newIdx = dir === "prev" ? previewIdx - 1 : previewIdx + 1;
+              if (newIdx >= 0 && newIdx < clips.length) {
+                setPreviewClipId(clips[newIdx].id);
+              }
+            }}
+          />
+        );
+      })()}
+
       {/* Keyboard hint */}
       <div className="text-center mt-8 text-xs hidden sm:block" style={{ color: "var(--fg-muted)" }}>
         <kbd className="px-1.5 py-0.5 rounded font-mono" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>?</kbd> 단축키 보기
