@@ -83,6 +83,15 @@ function ensureSchema(): Promise<void> {
       total_duration REAL NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS feedback (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id),
+      category TEXT NOT NULL DEFAULT 'general',
+      message TEXT NOT NULL,
+      email TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `).then(() => undefined);
 
   return global.__clipSchemaReady;
