@@ -297,15 +297,36 @@ export default function LandingPage() {
       <ScrollToTop />
 
       {/* Footer */}
-      <footer className="px-6 py-8 text-sm" style={{ color: "var(--fg-muted)", borderTop: "1px solid var(--border)" }}>
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>클립AI &copy; {new Date().getFullYear()}</span>
-          <div className="flex gap-4">
-            <Link href="/pricing">요금제</Link>
-            <Link href="/mypage">마이페이지</Link>
-            <Link href="/login">로그인</Link>
-            <Link href="/terms">이용약관</Link>
-            <Link href="/privacy">개인정보처리방침</Link>
+      <footer className="px-6 py-12 text-sm" style={{ color: "var(--fg-muted)", borderTop: "1px solid var(--border)" }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="font-bold text-base mb-3" style={{ color: "var(--fg)" }}>클립AI</div>
+              <p className="text-sm leading-relaxed">
+                게임 영상을 올리면 AI가 편집점을 찾고 나레이션을 입히고 자막까지 넣어 드립니다.
+              </p>
+            </div>
+            <div>
+              <div className="font-semibold mb-3" style={{ color: "var(--fg)" }}>서비스</div>
+              <div className="flex flex-col gap-2">
+                <Link href="/studio" className="hover:underline">스튜디오</Link>
+                <Link href="/gallery" className="hover:underline">갤러리</Link>
+                <Link href="/guide" className="hover:underline">사용 가이드</Link>
+                <Link href="/pricing" className="hover:underline">요금제</Link>
+              </div>
+            </div>
+            <div>
+              <div className="font-semibold mb-3" style={{ color: "var(--fg)" }}>고객지원</div>
+              <div className="flex flex-col gap-2">
+                <Link href="/contact" className="hover:underline">피드백 / 문의</Link>
+                <Link href="/mypage" className="hover:underline">마이페이지</Link>
+                <Link href="/terms" className="hover:underline">이용약관</Link>
+                <Link href="/privacy" className="hover:underline">개인정보처리방침</Link>
+              </div>
+            </div>
+          </div>
+          <div className="text-center pt-6" style={{ borderTop: "1px solid var(--border)" }}>
+            클립AI &copy; {new Date().getFullYear()} &middot; All rights reserved.
           </div>
         </div>
       </footer>
