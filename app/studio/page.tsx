@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts";
 import { VideoThumbnail } from "@/components/video-thumbnail";
 import { saveDraft, loadDraft, clearDraft, type DraftData } from "@/lib/draft-storage";
+import { RenderProgress } from "@/components/render-progress";
 
 interface AuthUser {
   id: number;
@@ -745,33 +746,12 @@ export default function StudioPage() {
 
       {/* Processing Status */}
       {isProcessing && (
-        <div className="card text-center">
-          <div className="text-3xl mb-4 animate-pulse">
-            {status === "uploading" ? "📤" : status === "downloading" ? "⬇️" : status === "detecting_spikes" ? "🔍" : status === "rendering" ? "🎬" : "⚡"}
-          </div>
-          <div className="font-semibold mb-2">
-            {status === "uploading" && `업로드 중... ${progress}%`}
-            {status === "downloading" && "유튜브 영상 다운로드 중..."}
-            {status === "detecting_spikes" && "편집점 찾는 중..."}
-            {status === "cutting_clips" && "클립 추출 중..."}
-            {status === "generating_scripts" && "나레이션 생성 중..."}
-            {status === "generating_tts" && "음성 합성 중..."}
-            {status === "rendering" && (renderPhase || "영상 렌더링 중...")}
-          </div>
-          <div className="max-w-md mx-auto mt-4">
-            <div className="progress-bar">
-              <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-          {status === "rendering" && (
-            <button
-              className="btn-ghost mt-4 text-sm"
-              onClick={handleCancelRender}
-            >
-              취소
-            </button>
-          )}
-        </div>
+        <RenderProgress
+          status={status}
+          progress={progress}
+          renderPhase={renderPhase}
+          onCancel={handleCancelRender}
+        />
       )}
 
       {/* Error */}
