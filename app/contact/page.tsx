@@ -200,28 +200,28 @@ export default function ContactPage() {
             <Link href="/terms" className="hover:underline">이용약관</Link>
             <Link href="/privacy" className="hover:underline">개인정보처리방침</Link>
           </div>
-          <p>© 2024 클립AI. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} 클립AI. All rights reserved.</p>
         </div>
       </footer>
 
       {/* Mobile Bottom Nav */}
       <nav className="mobile-bottom-nav">
-        <a href="/">
+        <Link href="/">
           <span className="text-base">🏠</span>
           <span>홈</span>
-        </a>
-        <a href="/studio">
+        </Link>
+        <Link href="/studio">
           <span className="text-base">🎬</span>
           <span>스튜디오</span>
-        </a>
-        <a href="/gallery">
+        </Link>
+        <Link href="/gallery">
           <span className="text-base">🖼️</span>
           <span>갤러리</span>
-        </a>
-        <a href="/pricing">
+        </Link>
+        <Link href="/pricing">
           <span className="text-base">💰</span>
           <span>요금제</span>
-        </a>
+        </Link>
       </nav>
     </main>
   );

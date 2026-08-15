@@ -24,22 +24,22 @@ export default function NotFound() {
 
       {/* Mobile Bottom Nav */}
       <nav className="mobile-bottom-nav">
-        <a href="/">
+        <Link href="/">
           <span className="text-base">🏠</span>
           <span>홈</span>
-        </a>
-        <a href="/studio">
+        </Link>
+        <Link href="/studio">
           <span className="text-base">🎬</span>
           <span>스튜디오</span>
-        </a>
-        <a href="/gallery">
+        </Link>
+        <Link href="/gallery">
           <span className="text-base">🖼️</span>
           <span>갤러리</span>
-        </a>
-        <a href="/pricing">
+        </Link>
+        <Link href="/pricing">
           <span className="text-base">💰</span>
           <span>요금제</span>
-        </a>
+        </Link>
       </nav>
     </main>
   );
