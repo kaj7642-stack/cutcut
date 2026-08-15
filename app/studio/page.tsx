@@ -743,7 +743,7 @@ export default function StudioPage() {
             <div className="grid sm:grid-cols-3 gap-3 mt-6">
               {[
                 { icon: "⚡", text: "음량 스파이크로 킬/클러치를 자동 감지" },
-                { icon: "🎤", text: "AI가 상황에 맞는 나레이션 자동 생성" },
+                { icon: "🎙️", text: "AI가 상황에 맞는 나레이션 자동 생성" },
                 { icon: "📱", text: "쇼츠(9:16)와 롱폼(16:9) 모두 지원" },
               ].map((tip) => (
                 <div
@@ -1266,22 +1266,22 @@ export default function StudioPage() {
 
       {/* Mobile Bottom Nav */}
       <nav className="mobile-bottom-nav">
-        <a href="/">
+        <Link href="/">
           <span className="text-base">🏠</span>
           <span>홈</span>
-        </a>
-        <a href="/studio" className="active">
+        </Link>
+        <Link href="/studio" className="active">
           <span className="text-base">🎬</span>
           <span>스튜디오</span>
-        </a>
-        <a href="/gallery">
+        </Link>
+        <Link href="/gallery">
           <span className="text-base">🖼️</span>
           <span>갤러리</span>
-        </a>
-        <a href="/pricing">
+        </Link>
+        <Link href="/pricing">
           <span className="text-base">💰</span>
           <span>요금제</span>
-        </a>
+        </Link>
       </nav>
     </main>
   );
