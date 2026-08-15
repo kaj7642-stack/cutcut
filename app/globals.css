@@ -201,12 +201,10 @@ details.card > summary > span:last-child {
   }
 }
 
-/* Smooth scroll */
 html {
   scroll-behavior: smooth;
 }
 
-/* Fade-in on scroll */
 .fade-section {
   opacity: 0;
   transform: translateY(24px);
@@ -226,10 +224,91 @@ html {
     transform: none;
     transition: none;
   }
+  .hero-orb {
+    animation: none !important;
+  }
+  .hero-gradient-text {
+    animation: none !important;
+  }
 }
 
-/* Mobile responsive */
-/* Mobile bottom nav */
+/* Hero */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+}
+.hero-orb-1 {
+  width: 500px;
+  height: 500px;
+  background: var(--accent);
+  opacity: 0.1;
+  top: -120px;
+  right: -80px;
+  animation: orb-float 14s ease-in-out infinite;
+}
+.hero-orb-2 {
+  width: 400px;
+  height: 400px;
+  background: #fd79a8;
+  opacity: 0.06;
+  bottom: 60px;
+  left: -120px;
+  animation: orb-float 10s ease-in-out infinite reverse;
+}
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+.hero-gradient-text {
+  background: linear-gradient(135deg, var(--accent), #a29bfe, #fd79a8, var(--accent));
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: text-shimmer 6s ease-in-out infinite;
+}
+@keyframes text-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.mockup-frame {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25), 0 0 40px var(--accent-glow);
+}
+.mockup-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.mockup-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.step-number {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+/* Mobile */
 .mobile-bottom-nav {
   display: none;
 }
