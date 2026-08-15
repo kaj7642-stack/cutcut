@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function ResetContent() {
   const searchParams = useSearchParams();
@@ -17,9 +18,9 @@ function ResetContent() {
         <div className="text-sm" style={{ color: "var(--danger)" }}>
           유효하지 않은 링크입니다.
         </div>
-        <a href="/login" className="btn-primary inline-block mt-4" style={{ padding: "10px 24px" }}>
+        <Link href="/login" className="btn-primary inline-block mt-4" style={{ padding: "10px 24px" }}>
           로그인 페이지로
-        </a>
+        </Link>
       </div>
     );
   }
@@ -32,9 +33,9 @@ function ResetContent() {
         <div className="text-sm mb-4" style={{ color: "var(--fg-muted)" }}>
           새 비밀번호로 로그인해주세요.
         </div>
-        <a href="/login" className="btn-primary inline-block" style={{ padding: "10px 24px" }}>
+        <Link href="/login" className="btn-primary inline-block" style={{ padding: "10px 24px" }}>
           로그인하기
-        </a>
+        </Link>
       </div>
     );
   }
@@ -92,17 +93,24 @@ function ResetContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm flex flex-col gap-6">
+    <main className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+      <div className="hero-orb hero-orb-1" style={{ opacity: 0.06 }} />
+      <div className="hero-orb hero-orb-2" style={{ opacity: 0.04 }} />
+      <div className="w-full max-w-sm flex flex-col gap-6 relative z-10">
         <div className="text-center">
-          <a href="/" className="text-2xl font-bold" style={{ color: "var(--accent)" }}>
+          <Link href="/" className="text-2xl font-bold" style={{ color: "var(--accent)" }}>
             클립AI
-          </a>
+          </Link>
           <h1 className="text-xl font-semibold mt-4">비밀번호 재설정</h1>
         </div>
         <Suspense>
           <ResetContent />
         </Suspense>
+        <div className="text-center">
+          <Link href="/login" className="text-sm hover:underline" style={{ color: "var(--fg-muted)" }}>
+            로그인 페이지로 돌아가기
+          </Link>
+        </div>
       </div>
     </main>
   );
