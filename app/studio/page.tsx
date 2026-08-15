@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
 import type { Clip, NarrationDraft, ProjectStatus, NarrationTone } from "@/lib/types";
 import { NARRATION_TONES, TTS_VOICES } from "@/lib/types";
 import { BGM_MOODS, type BgmMood } from "@/lib/bgm";
@@ -554,637 +555,654 @@ export default function StudioPage() {
     };
     saveDraft(data);
   }, [clips, drafts, selectedTone, selectedVoice, outputMode, bgmMood, renderQuality, includeStt, sttResults, projectId, videoPath, filename, isProcessing]);
+
   const selectedCount = clips.filter((c) => c.selected).length;
   const readyCount = clips.filter((c) => c.selected && c.memo).length;
   const canRender = freeLeft > 0 || credits > 0;
 
   return (
-    <main className="min-h-screen px-4 py-8 max-w-6xl mx-auto">
+    <main className="min-h-screen">
       {status === "idle" && <OnboardingOverlay />}
       <KeyboardShortcutsHelp />
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <a href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
-          클립AI
-        </a>
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <div className="flex gap-2">
-            <button
-              className={`tone-chip ${outputMode === "shorts" ? "active" : ""}`}
-              onClick={() => setOutputMode("shorts")}
-            >
-              📱 쇼츠
-            </button>
-            <button
-              className={`tone-chip ${outputMode === "longform" ? "active" : ""}`}
-              onClick={() => setOutputMode("longform")}
-            >
-              🖥️ 롱폼
-            </button>
+
+      {/* Sticky Glass Header */}
+      <header className="sticky top-0 z-40" style={{ background: "var(--bg-glass)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 max-w-6xl mx-auto">
+          <Link href="/" className="text-xl font-bold shrink-0" style={{ color: "var(--accent)" }}>
+            클립AI
+          </Link>
+          <div className="hidden sm:flex items-center gap-4 text-sm" style={{ color: "var(--fg-muted)" }}>
+            <Link href="/gallery" className="hover:underline">갤러리</Link>
+            <Link href="/guide" className="hover:underline">가이드</Link>
+            <Link href="/pricing" className="hover:underline">요금제</Link>
           </div>
-          {!authLoading && (
-            user ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-1 rounded-full" style={{ background: "var(--accent-glow)", color: "var(--accent)" }}>
-                  {freeLeft > 0 ? `무료 ${freeLeft}회` : `${credits}크레딧`}
-                </span>
-                <a
-                  href="/mypage"
-                  className="text-sm hover:underline"
-                  style={{ color: "var(--fg-muted)" }}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
+            <div className="flex gap-1">
+              <button
+                className={`tone-chip ${outputMode === "shorts" ? "active" : ""}`}
+                onClick={() => setOutputMode("shorts")}
+              >
+                📱 <span className="hidden sm:inline">쇼츠</span>
+              </button>
+              <button
+                className={`tone-chip ${outputMode === "longform" ? "active" : ""}`}
+                onClick={() => setOutputMode("longform")}
+              >
+                🖥️ <span className="hidden sm:inline">롱폼</span>
+              </button>
+            </div>
+            {!authLoading && (
+              user ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-1 rounded-full" style={{ background: "var(--accent-glow)", color: "var(--accent)" }}>
+                    {freeLeft > 0 ? `무료 ${freeLeft}회` : `${credits}크레딧`}
+                  </span>
+                  <Link
+                    href="/mypage"
+                    className="text-sm hover:underline hidden sm:inline"
+                    style={{ color: "var(--fg-muted)" }}
+                  >
+                    {user.nickname || user.email.split("@")[0]}
+                  </Link>
+                  <button
+                    className="text-xs px-2 py-1 rounded hidden sm:inline-block"
+                    style={{ color: "var(--fg-muted)", border: "1px solid var(--border)" }}
+                    onClick={async () => {
+                      await fetch("/api/auth/logout", { method: "POST" });
+                      setUser(null);
+                    }}
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login?redirect=/studio"
+                  className="text-sm px-3 py-1.5 rounded-lg"
+                  style={{ background: "var(--accent)", color: "#fff" }}
                 >
-                  {user.nickname || user.email.split("@")[0]}
-                </a>
-                <button
-                  className="text-xs px-2 py-1 rounded"
-                  style={{ color: "var(--fg-muted)", border: "1px solid var(--border)" }}
-                  onClick={async () => {
-                    await fetch("/api/auth/logout", { method: "POST" });
-                    setUser(null);
-                  }}
-                >
-                  로그아웃
-                </button>
+                  로그인
+                </Link>
+              )
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <div className="px-4 py-6 max-w-6xl mx-auto">
+        {/* Draft Recovery Banner */}
+        {hasDraft && status === "idle" && (
+          <div
+            className="card mb-4 flex items-center justify-between"
+            style={{ borderColor: "var(--accent)" }}
+          >
+            <div>
+              <div className="text-sm font-medium">이전 작업이 저장되어 있습니다</div>
+              <div className="text-xs mt-0.5" style={{ color: "var(--fg-muted)" }}>
+                24시간 이내 작업을 이어서 할 수 있습니다
               </div>
-            ) : (
-              <a
-                href="/login?redirect=/studio"
+            </div>
+            <div className="flex gap-2">
+              <button
                 className="text-sm px-3 py-1.5 rounded-lg"
                 style={{ background: "var(--accent)", color: "#fff" }}
+                onClick={restoreDraft}
               >
-                로그인
-              </a>
-            )
-          )}
-        </div>
-      </div>
-
-      {/* Draft Recovery Banner */}
-      {hasDraft && status === "idle" && (
-        <div
-          className="card mb-4 flex items-center justify-between"
-          style={{ borderColor: "var(--accent)" }}
-        >
-          <div>
-            <div className="text-sm font-medium">이전 작업이 저장되어 있습니다</div>
-            <div className="text-xs mt-0.5" style={{ color: "var(--fg-muted)" }}>
-              24시간 이내 작업을 이어서 할 수 있습니다
+                복원하기
+              </button>
+              <button
+                className="text-sm px-3 py-1.5 rounded-lg"
+                style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                onClick={() => { clearDraft(); setHasDraft(false); }}
+              >
+                무시
+              </button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              className="text-sm px-3 py-1.5 rounded-lg"
-              style={{ background: "var(--accent)", color: "#fff" }}
-              onClick={restoreDraft}
-            >
-              복원하기
-            </button>
-            <button
-              className="text-sm px-3 py-1.5 rounded-lg"
-              style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-              onClick={() => { clearDraft(); setHasDraft(false); }}
-            >
-              무시
-            </button>
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Upload Zone */}
-      {status === "idle" && (
-        <div>
-          {/* Input Mode Tabs */}
-          <div className="flex gap-2 mb-4">
-            <button
-              className={`tone-chip ${inputMode === "file" ? "active" : ""}`}
-              onClick={() => setInputMode("file")}
-            >
-              📁 파일 업로드
-            </button>
-            <button
-              className={`tone-chip ${inputMode === "youtube" ? "active" : ""}`}
-              onClick={() => setInputMode("youtube")}
-            >
-              ▶️ 유튜브 URL
-            </button>
-          </div>
+        {/* Upload Zone */}
+        {status === "idle" && (
+          <div>
+            {/* Input Mode Tabs */}
+            <div className="flex gap-2 mb-4">
+              <button
+                className={`tone-chip ${inputMode === "file" ? "active" : ""}`}
+                onClick={() => setInputMode("file")}
+              >
+                📁 파일 업로드
+              </button>
+              <button
+                className={`tone-chip ${inputMode === "youtube" ? "active" : ""}`}
+                onClick={() => setInputMode("youtube")}
+              >
+                ▶️ 유튜브 URL
+              </button>
+            </div>
 
-          {inputMode === "file" ? (
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="게임 영상 파일 업로드"
-              className={`upload-zone ${dragging ? "dragging" : ""}`}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
-            >
-              <div className="text-5xl mb-4">🎮</div>
-              <div className="text-xl font-semibold mb-2">게임 녹화 파일을 여기에 놓으세요</div>
-              <div style={{ color: "var(--fg-muted)" }}>
-                MP4, MKV, AVI, MOV, WebM (최대 500MB)
+            {inputMode === "file" ? (
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="게임 영상 파일 업로드"
+                className={`upload-zone ${dragging ? "dragging" : ""}`}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+              >
+                <div className="text-5xl mb-4">🎮</div>
+                <div className="text-xl font-semibold mb-2">게임 녹화 파일을 여기에 놓으세요</div>
+                <div style={{ color: "var(--fg-muted)" }}>
+                  MP4, MKV, AVI, MOV, WebM (최대 500MB)
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*"
-                className="hidden"
-                onChange={handleFileSelect}
+            ) : (
+              <div className="card">
+                <div className="text-3xl mb-4 text-center">▶️</div>
+                <div className="text-center font-semibold mb-4">유튜브 영상 URL을 입력하세요</div>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=... 또는 https://youtu.be/..."
+                    value={ytUrl}
+                    onChange={(e) => setYtUrl(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleYoutubeSubmit(); }}
+                    className="flex-1 px-4 py-3 rounded-lg text-sm"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      color: "var(--fg)",
+                    }}
+                  />
+                  <button
+                    className="btn-primary px-6"
+                    disabled={!ytUrl.trim()}
+                    onClick={handleYoutubeSubmit}
+                  >
+                    분석 시작
+                  </button>
+                </div>
+                <div className="text-xs mt-3 text-center" style={{ color: "var(--fg-muted)" }}>
+                  공개 영상만 지원 · 최대 60분 · 쇼츠 URL도 가능
+                </div>
+              </div>
+            )}
+
+            {/* Quick tips */}
+            <div className="grid sm:grid-cols-3 gap-3 mt-6">
+              {[
+                { icon: "⚡", text: "음량 스파이크로 킬/클러치를 자동 감지" },
+                { icon: "🎤", text: "AI가 상황에 맞는 나레이션 자동 생성" },
+                { icon: "📱", text: "쇼츠(9:16)와 롱폼(16:9) 모두 지원" },
+              ].map((tip) => (
+                <div
+                  key={tip.text}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm"
+                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                >
+                  <span className="text-lg">{tip.icon}</span>
+                  <span style={{ color: "var(--fg-muted)" }}>{tip.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Processing Status */}
+        {isProcessing && (
+          <RenderProgress
+            status={status}
+            progress={progress}
+            renderPhase={renderPhase}
+            onCancel={handleCancelRender}
+          />
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="card mb-6" style={{ borderColor: "var(--danger)" }}>
+            <div className="text-sm" style={{ color: "var(--danger)" }}>{error}</div>
+            <div className="flex gap-2 mt-3">
+              <button
+                className="btn-ghost text-sm"
+                onClick={() => { setError(""); setStatus(clips.length > 0 ? "done" : "idle"); }}
+              >
+                다시 시도
+              </button>
+              <button className="btn-ghost text-sm" onClick={resetProject}>
+                처음부터 다시
+              </button>
+              {error.includes("크레딧") && (
+                <Link href="/pricing" className="btn-primary text-sm">
+                  크레딧 충전
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Render Result */}
+        {resultUrl && !isProcessing && (
+          <div className="card mb-8 text-center">
+            <div className="text-3xl mb-3">🎉</div>
+            <h3 className="text-xl font-bold mb-4">영상이 완성되었습니다!</h3>
+            <div className="mb-4">
+              <video
+                src={resultUrl}
+                controls
+                className="mx-auto rounded-lg"
+                style={{
+                  maxWidth: outputMode === "shorts" ? "320px" : "100%",
+                  maxHeight: "500px",
+                }}
               />
             </div>
-          ) : (
-            <div className="card">
-              <div className="text-3xl mb-4 text-center">▶️</div>
-              <div className="text-center font-semibold mb-4">유튜브 영상 URL을 입력하세요</div>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  placeholder="https://www.youtube.com/watch?v=... 또는 https://youtu.be/..."
-                  value={ytUrl}
-                  onChange={(e) => setYtUrl(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleYoutubeSubmit(); }}
-                  className="flex-1 px-4 py-3 rounded-lg text-sm"
+            <div className="flex gap-3 justify-center flex-wrap">
+              <button className="btn-primary" onClick={handleDownload}>
+                ⬇️ 다운로드
+              </button>
+              <button
+                className="btn-ghost"
+                onClick={async () => {
+                  if (navigator.share && resultUrl) {
+                    const blob = await fetch(resultUrl).then((r) => r.blob());
+                    const file = new File([blob], `${filename.replace(/\.[^.]+$/, "")}_clip.webm`, { type: blob.type });
+                    try {
+                      await navigator.share({ files: [file], title: "클립AI로 만든 하이라이트" });
+                      trackEvent("share");
+                      toast("공유 완료!", "success");
+                    } catch { /* cancelled */ }
+                  } else {
+                    toast("이 브라우저에서는 공유가 지원되지 않습니다. 다운로드 후 공유해주세요.", "info");
+                  }
+                }}
+              >
+                📤 공유
+              </button>
+              <button
+                className="btn-ghost"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      `클립AI로 만든 게임 하이라이트를 확인해보세요!\nhttps://clipai.kr`
+                    );
+                    toast("클립보드에 복사되었습니다!", "success");
+                  } catch {
+                    toast("복사에 실패했습니다.", "error");
+                  }
+                }}
+              >
+                📋 링크 복사
+              </button>
+              <button
+                className="btn-ghost"
+                onClick={() => { setResultUrl(""); }}
+              >
+                다시 편집
+              </button>
+              <button className="btn-ghost" onClick={resetProject}>
+                새 프로젝트
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {clips.length > 0 && !isProcessing && (
+          <>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">
+                  {filename} — {clips.length}개 편집점
+                  <span className="text-sm font-normal ml-2" style={{ color: "var(--fg-muted)" }}>
+                    (선택 {Math.round(clips.filter(c => c.selected).reduce((s, c) => s + c.end - c.start, 0))}초)
+                  </span>
+                </h2>
+                <div className="flex items-center gap-3">
+                  <div className="text-sm" style={{ color: "var(--fg-muted)" }}>
+                    {selectedCount}개 선택됨
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                      onClick={selectAll}
+                    >
+                      전체 선택
+                    </button>
+                    <button
+                      className="text-xs px-2 py-1 rounded"
+                      style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                      onClick={deselectAll}
+                    >
+                      전체 해제
+                    </button>
+                    <button
+                      className="text-xs px-2 py-1 rounded"
+                      style={{
+                        border: "1px solid var(--border)",
+                        color: Object.keys(sttResults).length === clips.length ? "var(--success)" : "var(--accent)",
+                      }}
+                      onClick={handleBatchStt}
+                      disabled={Object.values(sttLoading).some(Boolean)}
+                    >
+                      {Object.values(sttLoading).some(Boolean)
+                        ? "🔤 자막 추출 중..."
+                        : Object.keys(sttResults).length === clips.length
+                          ? "🔤 자막 완료"
+                          : "🔤 전체 자막"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Clip List */}
+            <div className="grid gap-4 mb-8">
+              {clips.map((clip, clipIdx) => (
+                <div key={clip.id} className={`clip-card ${clip.selected ? "selected" : ""}`}>
+                  <div className="flex gap-4 p-4">
+                    {/* Video Preview */}
+                    <div className="shrink-0 flex flex-col items-center gap-1">
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => setPreviewClipId(clip.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === "Enter") setPreviewClipId(clip.id); }}
+                      >
+                        <VideoThumbnail
+                          src={`/api/clips/${projectId}/${clip.file}`}
+                          className="w-48 h-28 object-cover rounded-lg hover:opacity-80 transition-opacity"
+                        />
+                      </div>
+                      {outputMode === "longform" && clip.selected && (
+                        <div className="flex gap-1">
+                          <button
+                            className="text-xs px-2 py-0.5 rounded"
+                            style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                            onClick={() => moveClip(clipIdx, "up")}
+                            disabled={clipIdx === 0}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            className="text-xs px-2 py-0.5 rounded"
+                            style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                            onClick={() => moveClip(clipIdx, "down")}
+                            disabled={clipIdx === clips.length - 1}
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold">
+                          클립 {clip.index}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="text-xs px-2 py-1 rounded"
+                            style={{
+                              background: sttResults[clip.id] ? "var(--accent-glow)" : "var(--bg)",
+                              border: "1px solid var(--border)",
+                              color: sttResults[clip.id] ? "var(--accent)" : "var(--fg-muted)",
+                            }}
+                            disabled={sttLoading[clip.id]}
+                            onClick={() => handleStt(clip.id, clip.file)}
+                          >
+                            {sttLoading[clip.id] ? "인식 중..." : sttResults[clip.id] ? "🔤 자막 갱신" : "🔤 원본 자막"}
+                          </button>
+                          <button
+                            className={`px-3 py-1 rounded-full text-sm ${clip.selected ? "text-white" : ""}`}
+                            style={{
+                              background: clip.selected ? "var(--accent)" : "var(--bg)",
+                              border: "1px solid var(--border)",
+                            }}
+                            onClick={() => toggleClip(clip.id)}
+                          >
+                            {clip.selected ? "선택됨" : "선택"}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>
+                        {clip.start}s ~ {clip.end}s ({clip.duration}초)
+                        &nbsp;·&nbsp; 강도 {Math.max(...clip.spikes.map((s) => s.intensity))}/10
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="무슨 상황이었나요? (예: 1v3 역전 킬, 탑 솔킬 당함)"
+                        value={clip.memo}
+                        onChange={(e) => updateMemo(clip.id, e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg text-sm"
+                        style={{
+                          background: "var(--bg)",
+                          border: "1px solid var(--border)",
+                          color: "var(--fg)",
+                        }}
+                      />
+
+                      {/* STT Results */}
+                      {sttResults[clip.id] && sttResults[clip.id].length > 0 && (
+                        <div className="mt-2 p-3 rounded-lg text-sm" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span style={{ color: "var(--success)" }}>🔤 원본 음성 자막</span>
+                            <span className="text-xs" style={{ color: "var(--fg-muted)" }}>
+                              {sttResults[clip.id].length}개 구간
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            {sttResults[clip.id].map((seg, i) => (
+                              <div key={i} className="flex gap-2 text-xs">
+                                <span className="shrink-0 font-mono" style={{ color: "var(--fg-muted)" }}>
+                                  {seg.start.toFixed(1)}s
+                                </span>
+                                <span>{seg.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {sttResults[clip.id] && sttResults[clip.id].length === 0 && (
+                        <div className="mt-2 text-xs" style={{ color: "var(--fg-muted)" }}>
+                          이 클립에서 음성이 감지되지 않았습니다.
+                        </div>
+                      )}
+
+                      {/* Editable narration draft */}
+                      {drafts.find((d) => d.clip_id === clip.id) && (
+                        <div className="mt-2 p-3 rounded-lg text-sm" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span style={{ color: "var(--accent)" }}>나레이션 초안</span>
+                            <button
+                              className="text-xs px-2 py-1 rounded"
+                              style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
+                              onClick={() => {
+                                const draft = drafts.find((d) => d.clip_id === clip.id);
+                                if (draft) generateTts(draft.text);
+                              }}
+                            >
+                              🔊 미리듣기
+                            </button>
+                          </div>
+                          <textarea
+                            value={drafts.find((d) => d.clip_id === clip.id)?.text ?? ""}
+                            onChange={(e) => updateDraftText(clip.id, e.target.value)}
+                            rows={2}
+                            className="w-full px-2 py-1.5 rounded text-sm resize-none"
+                            style={{
+                              background: "var(--bg-card)",
+                              border: "1px solid var(--border)",
+                              color: "var(--fg)",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Narration & Render Controls */}
+            <div className="card mb-8">
+              <h3 className="font-semibold mb-4">나레이션 설정</h3>
+
+              <div className="mb-4">
+                <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>톤 선택</div>
+                <div className="flex flex-wrap gap-2">
+                  {NARRATION_TONES.map((tone) => (
+                    <button
+                      key={tone.key}
+                      className={`tone-chip ${selectedTone === tone.key ? "active" : ""}`}
+                      onClick={() => setSelectedTone(tone.key as NarrationTone)}
+                    >
+                      {tone.icon} {tone.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>음성 선택</div>
+                <select
+                  value={selectedVoice}
+                  onChange={(e) => setSelectedVoice(e.target.value)}
+                  className="px-3 py-2 rounded-lg text-sm"
                   style={{
                     background: "var(--bg)",
                     border: "1px solid var(--border)",
                     color: "var(--fg)",
                   }}
-                />
-                <button
-                  className="btn-primary px-6"
-                  disabled={!ytUrl.trim()}
-                  onClick={handleYoutubeSubmit}
                 >
-                  분석 시작
-                </button>
+                  {TTS_VOICES.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
               </div>
-              <div className="text-xs mt-3 text-center" style={{ color: "var(--fg-muted)" }}>
-                공개 영상만 지원 · 최대 60분 · 쇼츠 URL도 가능
-              </div>
-            </div>
-          )}
 
-          {/* Quick tips */}
-          <div className="grid sm:grid-cols-3 gap-3 mt-6">
-            {[
-              { icon: "⚡", text: "음량 스파이크로 킬/클러치를 자동 감지" },
-              { icon: "🎤", text: "AI가 상황에 맞는 나레이션 자동 생성" },
-              { icon: "📱", text: "쇼츠(9:16)와 롱폼(16:9) 모두 지원" },
-            ].map((tip) => (
-              <div
-                key={tip.text}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm"
-                style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
-              >
-                <span className="text-lg">{tip.icon}</span>
-                <span style={{ color: "var(--fg-muted)" }}>{tip.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Processing Status */}
-      {isProcessing && (
-        <RenderProgress
-          status={status}
-          progress={progress}
-          renderPhase={renderPhase}
-          onCancel={handleCancelRender}
-        />
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="card mb-6" style={{ borderColor: "var(--danger)" }}>
-          <div className="text-sm" style={{ color: "var(--danger)" }}>{error}</div>
-          <div className="flex gap-2 mt-3">
-            <button
-              className="btn-ghost text-sm"
-              onClick={() => { setError(""); setStatus(clips.length > 0 ? "done" : "idle"); }}
-            >
-              다시 시도
-            </button>
-            <button className="btn-ghost text-sm" onClick={resetProject}>
-              처음부터 다시
-            </button>
-            {error.includes("크레딧") && (
-              <a href="/pricing" className="btn-primary text-sm">
-                크레딧 충전
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Render Result */}
-      {resultUrl && !isProcessing && (
-        <div className="card mb-8 text-center">
-          <div className="text-3xl mb-3">🎉</div>
-          <h3 className="text-xl font-bold mb-4">영상이 완성되었습니다!</h3>
-          <div className="mb-4">
-            <video
-              src={resultUrl}
-              controls
-              className="mx-auto rounded-lg"
-              style={{
-                maxWidth: outputMode === "shorts" ? "320px" : "100%",
-                maxHeight: "500px",
-              }}
-            />
-          </div>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <button className="btn-primary" onClick={handleDownload}>
-              ⬇️ 다운로드
-            </button>
-            <button
-              className="btn-ghost"
-              onClick={async () => {
-                if (navigator.share && resultUrl) {
-                  const blob = await fetch(resultUrl).then((r) => r.blob());
-                  const file = new File([blob], `${filename.replace(/\.[^.]+$/, "")}_clip.webm`, { type: blob.type });
-                  try {
-                    await navigator.share({ files: [file], title: "클립AI로 만든 하이라이트" });
-                    trackEvent("share");
-                    toast("공유 완료!", "success");
-                  } catch { /* cancelled */ }
-                } else {
-                  toast("이 브라우저에서는 공유가 지원되지 않습니다. 다운로드 후 공유해주세요.", "info");
-                }
-              }}
-            >
-              📤 공유
-            </button>
-            <button
-              className="btn-ghost"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(
-                    `클립AI로 만든 게임 하이라이트를 확인해보세요!\nhttps://clipai.kr`
-                  );
-                  toast("클립보드에 복사되었습니다!", "success");
-                } catch {
-                  toast("복사에 실패했습니다.", "error");
-                }
-              }}
-            >
-              📋 링크 복사
-            </button>
-            <button
-              className="btn-ghost"
-              onClick={() => { setResultUrl(""); }}
-            >
-              다시 편집
-            </button>
-            <button className="btn-ghost" onClick={resetProject}>
-              새 프로젝트
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Results */}
-      {clips.length > 0 && !isProcessing && (
-        <>
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">
-                {filename} — {clips.length}개 편집점
-                <span className="text-sm font-normal ml-2" style={{ color: "var(--fg-muted)" }}>
-                  (선택 {Math.round(clips.filter(c => c.selected).reduce((s, c) => s + c.end - c.start, 0))}초)
-                </span>
-              </h2>
-              <div className="flex items-center gap-3">
-                <div className="text-sm" style={{ color: "var(--fg-muted)" }}>
-                  {selectedCount}개 선택됨
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    className="text-xs px-2 py-1 rounded"
-                    style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                    onClick={selectAll}
-                  >
-                    전체 선택
-                  </button>
-                  <button
-                    className="text-xs px-2 py-1 rounded"
-                    style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                    onClick={deselectAll}
-                  >
-                    전체 해제
-                  </button>
-                  <button
-                    className="text-xs px-2 py-1 rounded"
-                    style={{
-                      border: "1px solid var(--border)",
-                      color: Object.keys(sttResults).length === clips.length ? "var(--success)" : "var(--accent)",
-                    }}
-                    onClick={handleBatchStt}
-                    disabled={Object.values(sttLoading).some(Boolean)}
-                  >
-                    {Object.values(sttLoading).some(Boolean)
-                      ? "🔤 자막 추출 중..."
-                      : Object.keys(sttResults).length === clips.length
-                        ? "🔤 자막 완료"
-                        : "🔤 전체 자막"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Clip List */}
-          <div className="grid gap-4 mb-8">
-            {clips.map((clip, clipIdx) => (
-              <div key={clip.id} className={`clip-card ${clip.selected ? "selected" : ""}`}>
-                <div className="flex gap-4 p-4">
-                  {/* Video Preview */}
-                  <div className="shrink-0 flex flex-col items-center gap-1">
-                    <div
-                      className="cursor-pointer"
-                      onClick={() => setPreviewClipId(clip.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === "Enter") setPreviewClipId(clip.id); }}
-                    >
-                      <VideoThumbnail
-                        src={`/api/clips/${projectId}/${clip.file}`}
-                        className="w-48 h-28 object-cover rounded-lg hover:opacity-80 transition-opacity"
-                      />
-                    </div>
-                    {outputMode === "longform" && clip.selected && (
-                      <div className="flex gap-1">
-                        <button
-                          className="text-xs px-2 py-0.5 rounded"
-                          style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                          onClick={() => moveClip(clipIdx, "up")}
-                          disabled={clipIdx === 0}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="text-xs px-2 py-0.5 rounded"
-                          style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                          onClick={() => moveClip(clipIdx, "down")}
-                          disabled={clipIdx === clips.length - 1}
-                        >
-                          ↓
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">
-                        클립 {clip.index}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="text-xs px-2 py-1 rounded"
-                          style={{
-                            background: sttResults[clip.id] ? "var(--accent-glow)" : "var(--bg)",
-                            border: "1px solid var(--border)",
-                            color: sttResults[clip.id] ? "var(--accent)" : "var(--fg-muted)",
-                          }}
-                          disabled={sttLoading[clip.id]}
-                          onClick={() => handleStt(clip.id, clip.file)}
-                        >
-                          {sttLoading[clip.id] ? "인식 중..." : sttResults[clip.id] ? "🔤 자막 갱신" : "🔤 원본 자막"}
-                        </button>
-                        <button
-                          className={`px-3 py-1 rounded-full text-sm ${clip.selected ? "text-white" : ""}`}
-                          style={{
-                            background: clip.selected ? "var(--accent)" : "var(--bg)",
-                            border: "1px solid var(--border)",
-                          }}
-                          onClick={() => toggleClip(clip.id)}
-                        >
-                          {clip.selected ? "선택됨" : "선택"}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>
-                      {clip.start}s ~ {clip.end}s ({clip.duration}초)
-                      &nbsp;·&nbsp; 강도 {Math.max(...clip.spikes.map((s) => s.intensity))}/10
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="무슨 상황이었나요? (예: 1v3 역전 킬, 탑 솔킬 당함)"
-                      value={clip.memo}
-                      onChange={(e) => updateMemo(clip.id, e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg text-sm"
-                      style={{
-                        background: "var(--bg)",
-                        border: "1px solid var(--border)",
-                        color: "var(--fg)",
-                      }}
-                    />
-
-                    {/* STT Results */}
-                    {sttResults[clip.id] && sttResults[clip.id].length > 0 && (
-                      <div className="mt-2 p-3 rounded-lg text-sm" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span style={{ color: "var(--success)" }}>🔤 원본 음성 자막</span>
-                          <span className="text-xs" style={{ color: "var(--fg-muted)" }}>
-                            {sttResults[clip.id].length}개 구간
-                          </span>
-                        </div>
-                        <div className="space-y-1">
-                          {sttResults[clip.id].map((seg, i) => (
-                            <div key={i} className="flex gap-2 text-xs">
-                              <span className="shrink-0 font-mono" style={{ color: "var(--fg-muted)" }}>
-                                {seg.start.toFixed(1)}s
-                              </span>
-                              <span>{seg.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {sttResults[clip.id] && sttResults[clip.id].length === 0 && (
-                      <div className="mt-2 text-xs" style={{ color: "var(--fg-muted)" }}>
-                        이 클립에서 음성이 감지되지 않았습니다.
-                      </div>
-                    )}
-
-                    {/* Editable narration draft */}
-                    {drafts.find((d) => d.clip_id === clip.id) && (
-                      <div className="mt-2 p-3 rounded-lg text-sm" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span style={{ color: "var(--accent)" }}>나레이션 초안</span>
-                          <button
-                            className="text-xs px-2 py-1 rounded"
-                            style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
-                            onClick={() => {
-                              const draft = drafts.find((d) => d.clip_id === clip.id);
-                              if (draft) generateTts(draft.text);
-                            }}
-                          >
-                            🔊 미리듣기
-                          </button>
-                        </div>
-                        <textarea
-                          value={drafts.find((d) => d.clip_id === clip.id)?.text ?? ""}
-                          onChange={(e) => updateDraftText(clip.id, e.target.value)}
-                          rows={2}
-                          className="w-full px-2 py-1.5 rounded text-sm resize-none"
-                          style={{
-                            background: "var(--bg-card)",
-                            border: "1px solid var(--border)",
-                            color: "var(--fg)",
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Narration & Render Controls */}
-          <div className="card mb-8">
-            <h3 className="font-semibold mb-4">나레이션 설정</h3>
-
-            <div className="mb-4">
-              <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>톤 선택</div>
-              <div className="flex flex-wrap gap-2">
-                {NARRATION_TONES.map((tone) => (
-                  <button
-                    key={tone.key}
-                    className={`tone-chip ${selectedTone === tone.key ? "active" : ""}`}
-                    onClick={() => setSelectedTone(tone.key as NarrationTone)}
-                  >
-                    {tone.icon} {tone.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>음성 선택</div>
-              <select
-                value={selectedVoice}
-                onChange={(e) => setSelectedVoice(e.target.value)}
-                className="px-3 py-2 rounded-lg text-sm"
-                style={{
-                  background: "var(--bg)",
-                  border: "1px solid var(--border)",
-                  color: "var(--fg)",
-                }}
-              >
-                {TTS_VOICES.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>배경음악</div>
-              <div className="flex flex-wrap gap-2">
-                {BGM_MOODS.map((mood) => (
-                  <button
-                    key={mood.id}
-                    className={`tone-chip ${bgmMood === mood.id ? "active" : ""}`}
-                    onClick={() => setBgmMood(mood.id)}
-                  >
-                    {mood.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {Object.keys(sttResults).length > 0 && (
               <div className="mb-4">
-                <label className="flex items-center gap-2 cursor-pointer text-sm">
-                  <input
-                    type="checkbox"
-                    checked={includeStt}
-                    onChange={(e) => setIncludeStt(e.target.checked)}
-                    className="w-4 h-4 rounded"
-                    style={{ accentColor: "var(--accent)" }}
-                  />
-                  <span>렌더링에 원본 음성 자막 포함</span>
-                  <span className="text-xs" style={{ color: "var(--fg-muted)" }}>
-                    (STT로 추출한 자막이 영상에 표시됩니다)
-                  </span>
-                </label>
+                <div className="text-sm mb-2" style={{ color: "var(--fg-muted)" }}>배경음악</div>
+                <div className="flex flex-wrap gap-2">
+                  {BGM_MOODS.map((mood) => (
+                    <button
+                      key={mood.id}
+                      className={`tone-chip ${bgmMood === mood.id ? "active" : ""}`}
+                      onClick={() => setBgmMood(mood.id)}
+                    >
+                      {mood.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
 
-            {/* Quality selector */}
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-sm" style={{ color: "var(--fg-muted)" }}>화질:</span>
-              <div className="flex gap-1">
-                {([
-                  { id: "low" as const, label: "저화질", desc: "빠른 렌더링" },
-                  { id: "medium" as const, label: "중화질", desc: "균형" },
-                  { id: "high" as const, label: "고화질", desc: "최고 품질" },
-                ]).map((q) => (
-                  <button
-                    key={q.id}
-                    className={`tone-chip ${renderQuality === q.id ? "active" : ""}`}
-                    onClick={() => setRenderQuality(q.id)}
-                    title={q.desc}
-                  >
-                    {q.label}
-                  </button>
-                ))}
+              {Object.keys(sttResults).length > 0 && (
+                <div className="mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={includeStt}
+                      onChange={(e) => setIncludeStt(e.target.checked)}
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: "var(--accent)" }}
+                    />
+                    <span>렌더링에 원본 음성 자막 포함</span>
+                    <span className="text-xs" style={{ color: "var(--fg-muted)" }}>
+                      (STT로 추출한 자막이 영상에 표시됩니다)
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* Quality selector */}
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-sm" style={{ color: "var(--fg-muted)" }}>화질:</span>
+                <div className="flex gap-1">
+                  {([
+                    { id: "low" as const, label: "저화질", desc: "빠른 렌더링" },
+                    { id: "medium" as const, label: "중화질", desc: "균형" },
+                    { id: "high" as const, label: "고화질", desc: "최고 품질" },
+                  ]).map((q) => (
+                    <button
+                      key={q.id}
+                      className={`tone-chip ${renderQuality === q.id ? "active" : ""}`}
+                      onClick={() => setRenderQuality(q.id)}
+                      title={q.desc}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-3 flex-wrap">
-              <button
-                className="btn-primary"
-                disabled={isProcessing || readyCount === 0}
-                onClick={generateNarrations}
-              >
-                🎙️ 나레이션 생성
-              </button>
-              {drafts.length > 0 && (
+              <div className="flex gap-3 flex-wrap">
                 <button
                   className="btn-primary"
-                  disabled={isProcessing}
-                  onClick={handleRender}
+                  disabled={isProcessing || readyCount === 0}
+                  onClick={generateNarrations}
                 >
-                  🎬 {outputMode === "shorts" ? "쇼츠" : "롱폼"} 렌더링
-                  {user && (
-                    <span className="ml-1 text-xs opacity-75">
-                      ({freeLeft > 0 ? "무료" : "1크레딧"})
-                    </span>
-                  )}
+                  🎙️ 나레이션 생성
                 </button>
+                {drafts.length > 0 && (
+                  <button
+                    className="btn-primary"
+                    disabled={isProcessing}
+                    onClick={handleRender}
+                  >
+                    🎬 {outputMode === "shorts" ? "쇼츠" : "롱폼"} 렌더링
+                    {user && (
+                      <span className="ml-1 text-xs opacity-75">
+                        ({freeLeft > 0 ? "무료" : "1크레딧"})
+                      </span>
+                    )}
+                  </button>
+                )}
+                {drafts.length > 0 && (
+                  <button className="btn-ghost" onClick={exportNarrations} title="나레이션 스크립트를 텍스트 파일로 내보내기">
+                    📝 스크립트 저장
+                  </button>
+                )}
+                {drafts.length > 0 && !canRender && user && (
+                  <Link href="/pricing" className="btn-ghost">
+                    크레딧 충전
+                  </Link>
+                )}
+              </div>
+
+              {readyCount === 0 && (
+                <div className="mt-2 text-sm" style={{ color: "var(--fg-muted)" }}>
+                  클립을 선택하고 상황 메모를 작성하면 나레이션을 생성할 수 있습니다.
+                </div>
               )}
-              {drafts.length > 0 && (
-                <button className="btn-ghost" onClick={exportNarrations} title="나레이션 스크립트를 텍스트 파일로 내보내기">
-                  📝 스크립트 저장
-                </button>
-              )}
-              {drafts.length > 0 && !canRender && user && (
-                <a href="/pricing" className="btn-ghost">
-                  크레딧 충전
-                </a>
+
+              {drafts.length > 0 && selectedCount > 0 && (
+                <div className="mt-2 text-sm" style={{ color: "var(--fg-muted)" }}>
+                  나레이션 텍스트를 자유롭게 수정한 뒤 렌더링하세요. 탭을 켜둔 상태로 기다려주세요.
+                </div>
               )}
             </div>
+          </>
+        )}
 
-            {readyCount === 0 && (
-              <div className="mt-2 text-sm" style={{ color: "var(--fg-muted)" }}>
-                클립을 선택하고 상황 메모를 작성하면 나레이션을 생성할 수 있습니다.
-              </div>
-            )}
-
-            {drafts.length > 0 && selectedCount > 0 && (
-              <div className="mt-2 text-sm" style={{ color: "var(--fg-muted)" }}>
-                나레이션 텍스트를 자유롭게 수정한 뒤 렌더링하세요. 탭을 켜둔 상태로 기다려주세요.
-              </div>
-            )}
-          </div>
-        </>
-      )}
+        {/* Keyboard hint */}
+        <div className="text-center mt-8 text-xs hidden sm:block" style={{ color: "var(--fg-muted)" }}>
+          <kbd className="px-1.5 py-0.5 rounded font-mono" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>?</kbd> 단축키 보기
+        </div>
+      </div>
 
       {/* Clip Preview Modal */}
       {previewClipId && (() => {
@@ -1211,10 +1229,40 @@ export default function StudioPage() {
         );
       })()}
 
-      {/* Keyboard hint */}
-      <div className="text-center mt-8 text-xs hidden sm:block" style={{ color: "var(--fg-muted)" }}>
-        <kbd className="px-1.5 py-0.5 rounded font-mono" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>?</kbd> 단축키 보기
-      </div>
+      {/* Footer */}
+      <footer className="px-6 py-12 text-sm" style={{ color: "var(--fg-muted)", borderTop: "1px solid var(--border)" }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="font-bold text-base mb-3" style={{ color: "var(--fg)" }}>클립AI</div>
+              <p className="text-sm leading-relaxed">
+                게임 영상을 올리면 AI가 편집점을 찾고 나레이션을 입히고 자막까지 넣어 드립니다.
+              </p>
+            </div>
+            <div>
+              <div className="font-semibold mb-3" style={{ color: "var(--fg)" }}>서비스</div>
+              <div className="flex flex-col gap-2">
+                <Link href="/studio" className="hover:underline">스튜디오</Link>
+                <Link href="/gallery" className="hover:underline">갤러리</Link>
+                <Link href="/guide" className="hover:underline">사용 가이드</Link>
+                <Link href="/pricing" className="hover:underline">요금제</Link>
+              </div>
+            </div>
+            <div>
+              <div className="font-semibold mb-3" style={{ color: "var(--fg)" }}>고객지원</div>
+              <div className="flex flex-col gap-2">
+                <Link href="/contact" className="hover:underline">피드백 / 문의</Link>
+                <Link href="/mypage" className="hover:underline">마이페이지</Link>
+                <Link href="/terms" className="hover:underline">이용약관</Link>
+                <Link href="/privacy" className="hover:underline">개인정보처리방침</Link>
+              </div>
+            </div>
+          </div>
+          <div className="text-center pt-6" style={{ borderTop: "1px solid var(--border)" }}>
+            클립AI &copy; {new Date().getFullYear()} &middot; All rights reserved.
+          </div>
+        </div>
+      </footer>
 
       {/* Mobile Bottom Nav */}
       <nav className="mobile-bottom-nav">
@@ -1226,13 +1274,13 @@ export default function StudioPage() {
           <span className="text-base">🎬</span>
           <span>스튜디오</span>
         </a>
+        <a href="/gallery">
+          <span className="text-base">🖼️</span>
+          <span>갤러리</span>
+        </a>
         <a href="/pricing">
           <span className="text-base">💰</span>
           <span>요금제</span>
-        </a>
-        <a href={user ? "/mypage" : "/login?redirect=/studio"}>
-          <span className="text-base">👤</span>
-          <span>{user ? "마이페이지" : "로그인"}</span>
         </a>
       </nav>
     </main>
