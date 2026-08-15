@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { PLANS } from "@/lib/plans";
 import { ThemeToggle } from "@/components/theme-toggle";
+import Link from "next/link";
 
 interface UserInfo {
   id: number;
@@ -117,352 +118,392 @@ export default function MyPage() {
   const { user, credits, totalRenders, recentUsage, payments } = data;
 
   return (
-    <main className="min-h-screen px-4 py-8 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <a href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
-          클립AI
-        </a>
-        <div className="flex gap-2">
-          <ThemeToggle />
-          <a
-            href="/studio"
-            className="text-sm px-3 py-1.5 rounded-lg"
-            style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-          >
-            스튜디오
-          </a>
-          <button
-            className="text-sm px-3 py-1.5 rounded-lg"
-            style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-            onClick={async () => {
-              await fetch("/api/auth/logout", { method: "POST" });
-              window.location.href = "/";
-            }}
-          >
-            로그아웃
-          </button>
+    <main className="min-h-screen">
+      {/* Sticky Header */}
+      <header
+        className="sticky top-0 z-30 px-4 py-3"
+        style={{ background: "var(--bg-glass)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)" }}
+      >
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
+            클립AI
+          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/studio"
+              className="text-sm px-3 py-1.5 rounded-lg"
+              style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+            >
+              스튜디오
+            </Link>
+            <button
+              className="text-sm px-3 py-1.5 rounded-lg"
+              style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+              onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/";
+              }}
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Profile Card */}
-      <div className="card mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            {editingNick ? (
-              <div className="flex items-center gap-2">
+      <div className="px-4 py-8 max-w-3xl mx-auto">
+        {/* Profile Card */}
+        <div className="card mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              {editingNick ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={nickInput}
+                    onChange={(e) => setNickInput(e.target.value)}
+                    maxLength={20}
+                    className="px-3 py-1.5 rounded-lg text-lg font-bold"
+                    style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)", width: "180px" }}
+                    autoFocus
+                  />
+                  <button
+                    className="text-xs px-2 py-1 rounded"
+                    style={{ background: "var(--accent)", color: "#fff" }}
+                    disabled={nickSaving}
+                    onClick={async () => {
+                      setNickSaving(true);
+                      const res = await fetch("/api/mypage/nickname", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ nickname: nickInput }),
+                      });
+                      if (res.ok) {
+                        const d = await res.json();
+                        setData((prev) => prev ? { ...prev, user: { ...prev.user, nickname: d.nickname } } : prev);
+                      }
+                      setEditingNick(false);
+                      setNickSaving(false);
+                    }}
+                  >
+                    저장
+                  </button>
+                  <button
+                    className="text-xs px-2 py-1 rounded"
+                    style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                    onClick={() => setEditingNick(false)}
+                  >
+                    취소
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
+                    style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
+                  >
+                    {(user.nickname || user.email)[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold">{user.nickname || user.email.split("@")[0]}</h1>
+                    <div className="text-xs" style={{ color: "var(--fg-muted)" }}>{user.email}</div>
+                  </div>
+                  <button
+                    className="text-xs px-2 py-1 rounded ml-2"
+                    style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                    onClick={() => { setNickInput(user.nickname || ""); setEditingNick(true); }}
+                  >
+                    수정
+                  </button>
+                </div>
+              )}
+            </div>
+            <div
+              className="text-xs px-3 py-1.5 rounded-full font-medium"
+              style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
+            >
+              {user.loginMethods.map(methodLabel).join(" + ")}
+            </div>
+          </div>
+          <div className="text-xs" style={{ color: "var(--fg-muted)" }}>
+            가입일: {formatDate(user.createdAt)}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="card text-center">
+            <div className="text-3xl font-bold" style={{ color: "var(--accent)" }}>{credits}</div>
+            <div className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>남은 크레딧</div>
+          </div>
+          <div className="card text-center">
+            <div className="text-3xl font-bold" style={{ color: "var(--accent)" }}>{totalRenders}</div>
+            <div className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>총 렌더링</div>
+          </div>
+          <div className="card text-center flex flex-col items-center justify-center">
+            <Link href="/pricing" className="btn-primary text-sm inline-block" style={{ padding: "10px 16px" }}>
+              크레딧 충전
+            </Link>
+          </div>
+          <div className="card text-center flex flex-col items-center justify-center">
+            <Link href="/studio" className="btn-ghost text-sm inline-block" style={{ padding: "10px 16px" }}>
+              영상 만들기
+            </Link>
+          </div>
+        </div>
+
+        {/* Payment History */}
+        {payments.length > 0 && (
+          <div className="card mb-6">
+            <h2 className="font-semibold mb-4">결제 내역</h2>
+            <div className="space-y-3">
+              {payments.map((p, i) => {
+                const plan = PLANS.find((pl) => pl.id === p.planId);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-2"
+                    style={{ borderBottom: i < payments.length - 1 ? "1px solid var(--border)" : "none" }}
+                  >
+                    <div>
+                      <div className="text-sm font-medium">{plan?.name ?? p.planId}</div>
+                      <div className="text-xs" style={{ color: "var(--fg-muted)" }}>
+                        {formatDateTime(p.createdAt)}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold">{p.amount.toLocaleString()}원</div>
+                      <div
+                        className="text-xs"
+                        style={{ color: p.status === "PAID" ? "var(--success)" : "var(--fg-muted)" }}
+                      >
+                        {p.status === "PAID" ? "완료" : p.status}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Render History */}
+        {renders.length > 0 && (
+          <div className="card mb-6">
+            <h2 className="font-semibold mb-4">렌더링 기록</h2>
+            <div className="space-y-3">
+              {renders.map((r, i) => (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between py-2"
+                  style={{ borderBottom: i < renders.length - 1 ? "1px solid var(--border)" : "none" }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{r.filename}</div>
+                    <div className="text-xs flex gap-2 mt-0.5" style={{ color: "var(--fg-muted)" }}>
+                      <span>{r.mode === "shorts" ? "📱 쇼츠" : "💻 롱폼"}</span>
+                      <span>{r.clipsCount}개 클립</span>
+                      <span>{Math.round(r.totalDuration)}초</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <div className="text-xs" style={{ color: "var(--fg-muted)" }}>
+                      {formatDateTime(r.createdAt)}
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: "var(--accent)" }}>
+                      {r.quality === "high" ? "고화질" : r.quality === "medium" ? "중화질" : "저화질"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Usage History */}
+        {recentUsage.length > 0 && (
+          <div className="card mb-6">
+            <h2 className="font-semibold mb-4">최근 활동</h2>
+            <div className="space-y-2">
+              {recentUsage.map((u, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-1.5 text-sm"
+                  style={{ borderBottom: i < recentUsage.length - 1 ? "1px solid var(--border)" : "none" }}
+                >
+                  <span>{actionLabel(u.action)}</span>
+                  <span style={{ color: "var(--fg-muted)" }}>{formatDateTime(u.createdAt)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Account Settings */}
+        <div className="card mb-6">
+          <h2 className="font-semibold mb-4">계정 설정</h2>
+
+          {!showPwForm ? (
+            <button
+              className="text-sm px-3 py-2 rounded-lg"
+              style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+              onClick={() => setShowPwForm(true)}
+            >
+              {user.loginMethods.includes("email") ? "비밀번호 변경" : "비밀번호 설정"}
+            </button>
+          ) : (
+            <div className="space-y-3 mb-4">
+              {user.loginMethods.includes("email") && (
                 <input
-                  type="text"
-                  value={nickInput}
-                  onChange={(e) => setNickInput(e.target.value)}
-                  maxLength={20}
-                  className="px-3 py-1.5 rounded-lg text-lg font-bold"
-                  style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)", width: "180px" }}
-                  autoFocus
+                  type="password"
+                  placeholder="현재 비밀번호"
+                  value={currentPw}
+                  onChange={(e) => setCurrentPw(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
                 />
+              )}
+              <input
+                type="password"
+                placeholder="새 비밀번호 (6자 이상)"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg text-sm"
+                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
+              />
+              <div className="flex gap-2">
                 <button
-                  className="text-xs px-2 py-1 rounded"
+                  className="text-sm px-3 py-1.5 rounded-lg"
                   style={{ background: "var(--accent)", color: "#fff" }}
-                  disabled={nickSaving}
+                  disabled={pwSaving || newPw.length < 6}
                   onClick={async () => {
-                    setNickSaving(true);
-                    const res = await fetch("/api/mypage/nickname", {
+                    setPwSaving(true);
+                    setPwMsg("");
+                    const res = await fetch("/api/auth/password", {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ nickname: nickInput }),
+                      body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
                     });
+                    const d = await res.json();
                     if (res.ok) {
-                      const d = await res.json();
-                      setData((prev) => prev ? { ...prev, user: { ...prev.user, nickname: d.nickname } } : prev);
+                      setPwMsg("비밀번호가 변경되었습니다.");
+                      setCurrentPw("");
+                      setNewPw("");
+                      setShowPwForm(false);
+                      if (!user.loginMethods.includes("email")) {
+                        setData((prev) => prev ? { ...prev, user: { ...prev.user, loginMethods: [...prev.user.loginMethods, "email"] } } : prev);
+                      }
+                    } else {
+                      setPwMsg(d.error || "변경 실패");
                     }
-                    setEditingNick(false);
-                    setNickSaving(false);
+                    setPwSaving(false);
                   }}
                 >
                   저장
                 </button>
                 <button
-                  className="text-xs px-2 py-1 rounded"
+                  className="text-sm px-3 py-1.5 rounded-lg"
                   style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                  onClick={() => setEditingNick(false)}
+                  onClick={() => { setShowPwForm(false); setPwMsg(""); }}
                 >
                   취소
                 </button>
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">{user.nickname || user.email.split("@")[0]}</h1>
-                <button
-                  className="text-xs px-2 py-1 rounded"
-                  style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                  onClick={() => { setNickInput(user.nickname || ""); setEditingNick(true); }}
-                >
-                  수정
-                </button>
-              </div>
-            )}
-            <div className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>{user.email}</div>
-          </div>
-          <div
-            className="text-sm px-3 py-1.5 rounded-full"
-            style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
-          >
-            {user.loginMethods.map(methodLabel).join(" + ")}
-          </div>
-        </div>
-        <div className="text-xs" style={{ color: "var(--fg-muted)" }}>
-          가입일: {formatDate(user.createdAt)}
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="card text-center">
-          <div className="text-3xl font-bold" style={{ color: "var(--accent)" }}>{credits}</div>
-          <div className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>남은 크레딧</div>
-        </div>
-        <div className="card text-center">
-          <div className="text-3xl font-bold" style={{ color: "var(--accent)" }}>{totalRenders}</div>
-          <div className="text-sm mt-1" style={{ color: "var(--fg-muted)" }}>총 렌더링</div>
-        </div>
-        <div className="card text-center flex flex-col items-center justify-center">
-          <a href="/pricing" className="btn-primary text-sm inline-block" style={{ padding: "10px 16px" }}>
-            크레딧 충전
-          </a>
-        </div>
-        <div className="card text-center flex flex-col items-center justify-center">
-          <a href="/studio" className="btn-ghost text-sm inline-block" style={{ padding: "10px 16px" }}>
-            영상 만들기
-          </a>
-        </div>
-      </div>
-
-      {/* Payment History */}
-      {payments.length > 0 && (
-        <div className="card mb-6">
-          <h2 className="font-semibold mb-4">결제 내역</h2>
-          <div className="space-y-3">
-            {payments.map((p, i) => {
-              const plan = PLANS.find((pl) => pl.id === p.planId);
-              return (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-2"
-                  style={{ borderBottom: i < payments.length - 1 ? "1px solid var(--border)" : "none" }}
-                >
-                  <div>
-                    <div className="text-sm font-medium">{plan?.name ?? p.planId}</div>
-                    <div className="text-xs" style={{ color: "var(--fg-muted)" }}>
-                      {formatDateTime(p.createdAt)}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold">{p.amount.toLocaleString()}원</div>
-                    <div
-                      className="text-xs"
-                      style={{ color: p.status === "PAID" ? "var(--success)" : "var(--fg-muted)" }}
-                    >
-                      {p.status === "PAID" ? "완료" : p.status}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Render History */}
-      {renders.length > 0 && (
-        <div className="card mb-6">
-          <h2 className="font-semibold mb-4">렌더링 기록</h2>
-          <div className="space-y-3">
-            {renders.map((r) => (
-              <div
-                key={r.id}
-                className="flex items-center justify-between py-2"
-                style={{ borderBottom: "1px solid var(--border)" }}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium truncate">{r.filename}</div>
-                  <div className="text-xs flex gap-2 mt-0.5" style={{ color: "var(--fg-muted)" }}>
-                    <span>{r.mode === "shorts" ? "📱 쇼츠" : "🖥️ 롱폼"}</span>
-                    <span>{r.clipsCount}개 클립</span>
-                    <span>{Math.round(r.totalDuration)}초</span>
-                  </div>
-                </div>
-                <div className="text-right shrink-0 ml-3">
-                  <div className="text-xs" style={{ color: "var(--fg-muted)" }}>
-                    {formatDateTime(r.createdAt)}
-                  </div>
-                  <div className="text-xs mt-0.5" style={{ color: "var(--accent)" }}>
-                    {r.quality === "high" ? "고화질" : r.quality === "medium" ? "중화질" : "저화질"}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Usage History */}
-      {recentUsage.length > 0 && (
-        <div className="card mb-6">
-          <h2 className="font-semibold mb-4">최근 활동</h2>
-          <div className="space-y-2">
-            {recentUsage.map((u, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between py-1.5 text-sm"
-                style={{ borderBottom: i < recentUsage.length - 1 ? "1px solid var(--border)" : "none" }}
-              >
-                <span>{actionLabel(u.action)}</span>
-                <span style={{ color: "var(--fg-muted)" }}>{formatDateTime(u.createdAt)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Account Settings */}
-      <div className="card mb-6">
-        <h2 className="font-semibold mb-4">계정 설정</h2>
-
-        {/* Password Change */}
-        {!showPwForm ? (
-          <button
-            className="text-sm px-3 py-2 rounded-lg"
-            style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-            onClick={() => setShowPwForm(true)}
-          >
-            {user.loginMethods.includes("email") ? "비밀번호 변경" : "비밀번호 설정"}
-          </button>
-        ) : (
-          <div className="space-y-3 mb-4">
-            {user.loginMethods.includes("email") && (
-              <input
-                type="password"
-                placeholder="현재 비밀번호"
-                value={currentPw}
-                onChange={(e) => setCurrentPw(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
-              />
-            )}
-            <input
-              type="password"
-              placeholder="새 비밀번호 (6자 이상)"
-              value={newPw}
-              onChange={(e) => setNewPw(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
-            />
-            <div className="flex gap-2">
-              <button
-                className="text-sm px-3 py-1.5 rounded-lg"
-                style={{ background: "var(--accent)", color: "#fff" }}
-                disabled={pwSaving || newPw.length < 6}
-                onClick={async () => {
-                  setPwSaving(true);
-                  setPwMsg("");
-                  const res = await fetch("/api/auth/password", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
-                  });
-                  const d = await res.json();
-                  if (res.ok) {
-                    setPwMsg("비밀번호가 변경되었습니다.");
-                    setCurrentPw("");
-                    setNewPw("");
-                    setShowPwForm(false);
-                    if (!user.loginMethods.includes("email")) {
-                      setData((prev) => prev ? { ...prev, user: { ...prev.user, loginMethods: [...prev.user.loginMethods, "email"] } } : prev);
-                    }
-                  } else {
-                    setPwMsg(d.error || "변경 실패");
-                  }
-                  setPwSaving(false);
-                }}
-              >
-                저장
-              </button>
-              <button
-                className="text-sm px-3 py-1.5 rounded-lg"
-                style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                onClick={() => { setShowPwForm(false); setPwMsg(""); }}
-              >
-                취소
-              </button>
-            </div>
-            {pwMsg && <div className="text-sm" style={{ color: pwMsg.includes("변경") ? "var(--success)" : "var(--danger)" }}>{pwMsg}</div>}
-          </div>
-        )}
-
-        {/* Account Delete */}
-        <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
-          {!showDeleteConfirm ? (
-            <button
-              className="text-sm"
-              style={{ color: "var(--danger)" }}
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              계정 삭제
-            </button>
-          ) : (
-            <div className="space-y-3">
-              <div className="text-sm" style={{ color: "var(--danger)" }}>
-                계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
-              </div>
-              <div className="text-sm" style={{ color: "var(--fg-muted)" }}>
-                확인하려면 아래에 <strong>DELETE</strong>를 입력하세요.
-              </div>
-              <input
-                type="text"
-                placeholder="DELETE"
-                value={deleteInput}
-                onChange={(e) => setDeleteInput(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: "var(--bg)", border: "1px solid var(--danger)", color: "var(--fg)" }}
-              />
-              <div className="flex gap-2">
-                <button
-                  className="text-sm px-3 py-1.5 rounded-lg"
-                  style={{ background: "var(--danger)", color: "#fff" }}
-                  disabled={deleteInput !== "DELETE" || deleting}
-                  onClick={async () => {
-                    setDeleting(true);
-                    const res = await fetch("/api/auth/delete-account", {
-                      method: "DELETE",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ confirm: "DELETE" }),
-                    });
-                    if (res.ok) {
-                      window.location.href = "/?deleted=1";
-                    } else {
-                      setDeleting(false);
-                    }
-                  }}
-                >
-                  {deleting ? "삭제 중..." : "계정 영구 삭제"}
-                </button>
-                <button
-                  className="text-sm px-3 py-1.5 rounded-lg"
-                  style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
-                  onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); }}
-                >
-                  취소
-                </button>
-              </div>
+              {pwMsg && <div className="text-sm" style={{ color: pwMsg.includes("변경") ? "var(--success)" : "var(--danger)" }}>{pwMsg}</div>}
             </div>
           )}
+
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+            {!showDeleteConfirm ? (
+              <button
+                className="text-sm"
+                style={{ color: "var(--danger)" }}
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                계정 삭제
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <div className="text-sm" style={{ color: "var(--danger)" }}>
+                  계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+                </div>
+                <div className="text-sm" style={{ color: "var(--fg-muted)" }}>
+                  확인하려면 아래에 <strong>DELETE</strong>를 입력하세요.
+                </div>
+                <input
+                  type="text"
+                  placeholder="DELETE"
+                  value={deleteInput}
+                  onChange={(e) => setDeleteInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ background: "var(--bg)", border: "1px solid var(--danger)", color: "var(--fg)" }}
+                />
+                <div className="flex gap-2">
+                  <button
+                    className="text-sm px-3 py-1.5 rounded-lg"
+                    style={{ background: "var(--danger)", color: "#fff" }}
+                    disabled={deleteInput !== "DELETE" || deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      const res = await fetch("/api/auth/delete-account", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ confirm: "DELETE" }),
+                      });
+                      if (res.ok) {
+                        window.location.href = "/?deleted=1";
+                      } else {
+                        setDeleting(false);
+                      }
+                    }}
+                  >
+                    {deleting ? "삭제 중..." : "계정 영구 삭제"}
+                  </button>
+                  <button
+                    className="text-sm px-3 py-1.5 rounded-lg"
+                    style={{ border: "1px solid var(--border)", color: "var(--fg-muted)" }}
+                    onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); }}
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="text-center text-sm" style={{ color: "var(--fg-muted)" }}>
-        <a href="/studio" style={{ color: "var(--accent)" }}>스튜디오로 돌아가기</a>
-      </div>
+      <footer className="px-4 pb-20 sm:pb-8">
+        <div className="max-w-3xl mx-auto text-center text-xs" style={{ color: "var(--fg-muted)" }}>
+          <div className="flex justify-center gap-4 mb-3">
+            <Link href="/terms" className="hover:underline">이용약관</Link>
+            <Link href="/privacy" className="hover:underline">개인정보처리방침</Link>
+            <Link href="/contact" className="hover:underline">문의하기</Link>
+          </div>
+          <p>© 2024 클립AI. All rights reserved.</p>
+        </div>
+      </footer>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="mobile-bottom-nav">
+        <a href="/">
+          <span className="text-base">🏠</span>
+          <span>홈</span>
+        </a>
+        <a href="/studio">
+          <span className="text-base">🎬</span>
+          <span>스튜디오</span>
+        </a>
+        <a href="/gallery">
+          <span className="text-base">🖼️</span>
+          <span>갤러리</span>
+        </a>
+        <a href="/pricing">
+          <span className="text-base">💰</span>
+          <span>요금제</span>
+        </a>
+      </nav>
     </main>
   );
 }

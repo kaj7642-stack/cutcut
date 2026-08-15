@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -88,7 +89,7 @@ function LoginContent() {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             className="w-full px-4 py-3 rounded-xl text-sm"
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--fg)" }}
+            style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
           />
         )}
         <input
@@ -98,7 +99,7 @@ function LoginContent() {
           onChange={(e) => setEmail(e.target.value)}
           required
           className="w-full px-4 py-3 rounded-xl text-sm"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--fg)" }}
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
         />
         <input
           type="password"
@@ -108,7 +109,7 @@ function LoginContent() {
           required
           minLength={tab === "signup" ? 6 : undefined}
           className="w-full px-4 py-3 rounded-xl text-sm"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--fg)" }}
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
         />
         <button
           type="submit"
@@ -178,7 +179,7 @@ function LoginContent() {
       <div className="flex flex-col gap-3">
         <a
           href={kakaoHref}
-          className="flex items-center justify-center gap-3 rounded-xl px-5 py-3 font-semibold text-sm text-[#191919] transition-colors hover:opacity-90"
+          className="flex items-center justify-center gap-3 rounded-xl px-5 py-3 font-semibold text-sm text-[#191919] transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]"
           style={{ backgroundColor: "#FEE500" }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -188,7 +189,7 @@ function LoginContent() {
         </a>
         <a
           href={naverHref}
-          className="flex items-center justify-center gap-3 rounded-xl px-5 py-3 font-semibold text-sm text-white transition-colors hover:opacity-90"
+          className="flex items-center justify-center gap-3 rounded-xl px-5 py-3 font-semibold text-sm text-white transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99]"
           style={{ backgroundColor: "#03C75A" }}
         >
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -206,8 +207,8 @@ function LoginContent() {
 
       <p className="text-center text-xs" style={{ color: "var(--fg-muted)" }}>
         로그인하면{" "}
-        <a href="/terms" style={{ color: "var(--accent)" }}>이용약관</a> 및{" "}
-        <a href="/privacy" style={{ color: "var(--accent)" }}>개인정보처리방침</a>에 동의합니다
+        <Link href="/terms" style={{ color: "var(--accent)" }}>이용약관</Link> 및{" "}
+        <Link href="/privacy" style={{ color: "var(--accent)" }}>개인정보처리방침</Link>에 동의합니다
       </p>
     </>
   );
@@ -215,21 +216,45 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm flex flex-col gap-6">
-        <div className="text-center">
-          <a href="/" className="text-2xl font-bold" style={{ color: "var(--accent)" }}>
-            클립AI
-          </a>
-          <h1 className="text-xl font-semibold mt-4">시작하기</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--fg-muted)" }}>
-            영상 렌더링 기능을 이용하려면 로그인이 필요합니다
-          </p>
+    <main className="min-h-screen relative">
+      {/* Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="hero-orb hero-orb-1" style={{ opacity: 0.06 }} />
+        <div className="hero-orb hero-orb-2" style={{ opacity: 0.04 }} />
+      </div>
+
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header */}
+        <div className="px-4 py-4">
+          <div className="max-w-sm mx-auto flex items-center justify-between">
+            <Link href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
+              클립AI
+            </Link>
+            <Link
+              href="/guide"
+              className="text-xs"
+              style={{ color: "var(--fg-muted)" }}
+            >
+              사용 가이드
+            </Link>
+          </div>
         </div>
 
-        <Suspense>
-          <LoginContent />
-        </Suspense>
+        {/* Form */}
+        <div className="flex-1 flex items-center justify-center px-4 pb-8">
+          <div className="w-full max-w-sm flex flex-col gap-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-2">시작하기</h1>
+              <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
+                영상 렌더링 기능을 이용하려면 로그인이 필요합니다
+              </p>
+            </div>
+
+            <Suspense>
+              <LoginContent />
+            </Suspense>
+          </div>
+        </div>
       </div>
     </main>
   );
