@@ -95,97 +95,166 @@ const TIPS = [
 
 export default function GuidePage() {
   return (
-    <main className="min-h-screen px-4 py-8 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <Link href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
-          클립AI
-        </Link>
-        <Link
-          href="/studio"
-          className="text-sm px-4 py-2 rounded-lg"
-          style={{ background: "var(--accent)", color: "#fff" }}
-        >
-          바로 시작하기
-        </Link>
-      </div>
+    <main className="min-h-screen">
+      {/* Sticky Header */}
+      <header
+        className="sticky top-0 z-30 px-4 py-3"
+        style={{ background: "var(--bg-glass)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)" }}
+      >
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
+            클립AI
+          </Link>
+          <nav className="hidden sm:flex items-center gap-6 text-sm" style={{ color: "var(--fg-muted)" }}>
+            <Link href="/studio" className="hover:underline">스튜디오</Link>
+            <Link href="/gallery" className="hover:underline">갤러리</Link>
+            <Link href="/pricing" className="hover:underline">요금제</Link>
+          </nav>
+          <Link
+            href="/studio"
+            className="text-sm px-4 py-2 rounded-lg font-medium"
+            style={{ background: "var(--accent)", color: "#fff" }}
+          >
+            바로 시작하기
+          </Link>
+        </div>
+      </header>
 
-      {/* Title */}
-      <div className="text-center mb-12">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3">
-          사용 <span style={{ color: "var(--accent)" }}>가이드</span>
-        </h1>
-        <p style={{ color: "var(--fg-muted)" }}>
-          게임 영상을 올리면 AI가 쇼츠를 만들어 드립니다. 6단계를 알아보세요.
-        </p>
-      </div>
+      {/* Hero */}
+      <section className="relative overflow-hidden px-4 pt-16 pb-12">
+        <div className="hero-orb hero-orb-2" style={{ opacity: 0.05 }} />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h1 className="text-3xl sm:text-5xl font-extrabold mb-4">
+            사용 <span className="hero-gradient-text">가이드</span>
+          </h1>
+          <p className="text-lg" style={{ color: "var(--fg-muted)" }}>
+            게임 영상을 올리면 AI가 쇼츠를 만들어 드립니다. 6단계를 알아보세요.
+          </p>
+        </div>
+      </section>
 
       {/* Steps */}
-      <div className="space-y-6 mb-16">
-        {STEPS.map((step) => (
-          <div key={step.number} className="card flex gap-5 items-start">
-            <div className="shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
-                 style={{ background: "var(--accent-glow)" }}>
-              {step.icon}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "var(--accent)", color: "#fff" }}>
-                  STEP {step.number}
-                </span>
-                <h2 className="font-bold text-lg">{step.title}</h2>
+      <section className="px-4 mb-16">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {STEPS.map((step) => (
+            <div key={step.number} className="card flex gap-5 items-start">
+              <div className="shrink-0">
+                <div
+                  className="step-number"
+                  style={{ background: "var(--accent-glow)", color: "var(--accent)" }}
+                >
+                  {step.icon}
+                </div>
               </div>
-              <p className="text-sm mb-3" style={{ color: "var(--fg-muted)" }}>
-                {step.description}
-              </p>
-              <ul className="space-y-1">
-                {step.details.map((detail) => (
-                  <li key={detail} className="flex items-start gap-2 text-sm">
-                    <span style={{ color: "var(--accent)" }}>-</span>
-                    <span style={{ color: "var(--fg-muted)" }}>{detail}</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className="text-xs font-mono px-2 py-0.5 rounded font-semibold"
+                    style={{ background: "var(--accent)", color: "#fff" }}
+                  >
+                    STEP {step.number}
+                  </span>
+                  <h2 className="font-bold text-lg">{step.title}</h2>
+                </div>
+                <p className="text-sm mb-3" style={{ color: "var(--fg-muted)" }}>
+                  {step.description}
+                </p>
+                <ul className="space-y-1.5">
+                  {step.details.map((detail) => (
+                    <li key={detail} className="flex items-start gap-2 text-sm">
+                      <span style={{ color: "var(--success)" }}>✓</span>
+                      <span style={{ color: "var(--fg-muted)" }}>{detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Tips */}
+      <section className="px-4 mb-16">
+        <div className="max-w-4xl mx-auto grid sm:grid-cols-2 gap-6">
+          {TIPS.map((tip) => (
+            <div key={tip.title} className="card">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">{tip.icon}</span>
+                <h3 className="font-bold text-lg">{tip.title}</h3>
+              </div>
+              <ul className="space-y-2.5">
+                {tip.items.map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm">
+                    <span style={{ color: "var(--success)" }}>✓</span>
+                    <span style={{ color: "var(--fg-muted)" }}>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Tips */}
-      <div className="grid sm:grid-cols-2 gap-6 mb-16">
-        {TIPS.map((tip) => (
-          <div key={tip.title} className="card">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">{tip.icon}</span>
-              <h3 className="font-bold">{tip.title}</h3>
-            </div>
-            <ul className="space-y-2">
-              {tip.items.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm">
-                  <span style={{ color: "var(--success)" }}>-</span>
-                  <span style={{ color: "var(--fg-muted)" }}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      {/* FAQ quick link */}
-      <div className="card text-center mb-8">
-        <h2 className="font-bold text-lg mb-2">더 궁금한 점이 있으신가요?</h2>
-        <p className="text-sm mb-4" style={{ color: "var(--fg-muted)" }}>
-          자주 묻는 질문을 확인하거나 바로 시작해보세요
-        </p>
-        <div className="flex gap-3 justify-center">
-          <Link href="/#faq" className="btn-ghost text-sm">
-            FAQ 보기
-          </Link>
-          <Link href="/studio" className="btn-primary text-sm">
-            무료로 시작하기
-          </Link>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* CTA */}
+      <section className="px-4 mb-16">
+        <div className="max-w-4xl mx-auto">
+          <div
+            className="relative overflow-hidden rounded-2xl px-6 py-12 text-center"
+            style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+          >
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: "radial-gradient(ellipse at center, var(--accent-glow), transparent 70%)" }}
+            />
+            <div className="relative z-10">
+              <h2 className="font-bold text-xl mb-2">더 궁금한 점이 있으신가요?</h2>
+              <p className="text-sm mb-6" style={{ color: "var(--fg-muted)" }}>
+                자주 묻는 질문을 확인하거나 바로 시작해보세요
+              </p>
+              <div className="flex gap-3 justify-center flex-wrap">
+                <Link href="/#faq" className="btn-ghost text-sm">
+                  FAQ 보기
+                </Link>
+                <Link href="/studio" className="btn-primary text-sm">
+                  무료로 시작하기
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="px-4 pb-20 sm:pb-8">
+        <div className="max-w-4xl mx-auto text-center text-xs" style={{ color: "var(--fg-muted)" }}>
+          <div className="flex justify-center gap-4 mb-3">
+            <Link href="/terms" className="hover:underline">이용약관</Link>
+            <Link href="/privacy" className="hover:underline">개인정보처리방침</Link>
+            <Link href="/contact" className="hover:underline">문의하기</Link>
+          </div>
+          <p>© 2024 클립AI. All rights reserved.</p>
+        </div>
+      </footer>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="mobile-bottom-nav">
+        <a href="/">
+          <span className="text-base">🏠</span>
+          <span>홈</span>
+        </a>
+        <a href="/studio">
+          <span className="text-base">🎬</span>
+          <span>스튜디오</span>
+        </a>
+        <a href="/gallery">
+          <span className="text-base">🖼️</span>
+          <span>갤러리</span>
+        </a>
+        <a href="/pricing">
+          <span className="text-base">💰</span>
+          <span>요금제</span>
+        </a>
+      </nav>
     </main>
   );
 }
