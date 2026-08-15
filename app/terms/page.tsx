@@ -132,15 +132,15 @@ export default function TermsPage() {
             <Link href="/privacy" className="hover:underline">개인정보처리방침</Link>
             <Link href="/contact" className="hover:underline">문의하기</Link>
           </div>
-          <p>© 2024 클립AI. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} 클립AI. All rights reserved.</p>
         </div>
       </footer>
 
       <nav className="mobile-bottom-nav">
-        <a href="/"><span className="text-base">🏠</span><span>홈</span></a>
-        <a href="/studio"><span className="text-base">🎬</span><span>스튜디오</span></a>
-        <a href="/gallery"><span className="text-base">🖼️</span><span>갤러리</span></a>
-        <a href="/pricing"><span className="text-base">💰</span><span>요금제</span></a>
+        <Link href="/"><span className="text-base">🏠</span><span>홈</span></Link>
+        <Link href="/studio"><span className="text-base">🎬</span><span>스튜디오</span></Link>
+        <Link href="/gallery"><span className="text-base">🖼️</span><span>갤러리</span></Link>
+        <Link href="/pricing"><span className="text-base">💰</span><span>요금제</span></Link>
       </nav>
     </main>
   );
