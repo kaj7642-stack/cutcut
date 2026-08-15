@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { PLANS } from "@/lib/plans";
 
 interface Stats {
@@ -117,7 +118,7 @@ export default function AdminPage() {
         <div className="card text-center max-w-sm">
           <div className="text-3xl mb-4">🔒</div>
           <div className="font-semibold mb-2">{error || "데이터를 불러올 수 없습니다."}</div>
-          <a href="/" className="text-sm" style={{ color: "var(--accent)" }}>홈으로 돌아가기</a>
+          <Link href="/" className="text-sm" style={{ color: "var(--accent)" }}>홈으로 돌아가기</Link>
         </div>
       </main>
     );
@@ -126,21 +127,21 @@ export default function AdminPage() {
   const maxRender = Math.max(...stats.dailyRenders.map((d) => d.count), 1);
 
   return (
-    <main className="min-h-screen px-4 py-8 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <main className="min-h-screen px-4 pb-8 max-w-5xl mx-auto">
+      {/* Sticky Glass Header */}
+      <nav className="sticky top-0 z-40 flex items-center justify-between py-4 mb-6 -mx-4 px-4" style={{ background: "var(--bg-glass)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
         <div className="flex items-center gap-3">
-          <a href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
+          <Link href="/" className="text-xl font-bold" style={{ color: "var(--accent)" }}>
             클립AI
-          </a>
+          </Link>
           <span className="text-xs px-2 py-1 rounded-full" style={{ background: "var(--accent-glow)", color: "var(--accent)" }}>
             관리자
           </span>
         </div>
-        <a href="/studio" className="text-sm" style={{ color: "var(--fg-muted)", border: "1px solid var(--border)", padding: "6px 12px", borderRadius: "8px" }}>
+        <Link href="/studio" className="text-sm" style={{ color: "var(--fg-muted)", border: "1px solid var(--border)", padding: "6px 12px", borderRadius: "8px" }}>
           스튜디오
-        </a>
-      </div>
+        </Link>
+      </nav>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-8 p-1 rounded-xl" style={{ background: "var(--bg-card)" }}>
@@ -271,7 +272,7 @@ export default function AdminPage() {
 
           {/* Total count */}
           <div className="text-sm mb-4" style={{ color: "var(--fg-muted)" }}>
-            총 {userTotal}명{userSearch && ` (\"${userSearch}\" 검색 결과)`}
+            총 {userTotal}명{userSearch && ` ("${userSearch}" 검색 결과)`}
           </div>
 
           {/* User list */}
@@ -516,7 +517,8 @@ export default function AdminPage() {
           )}
         </div>
       </div>
-      </>}
+      </>
+      }
     </main>
   );
 }

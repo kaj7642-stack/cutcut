@@ -79,7 +79,7 @@ export default function LandingPage() {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 max-w-3xl">
             게임 영상 올리면
             <br />
-            <span className="hero-gradient-text">쇼츠가 뚚딱</span>
+            <span className="hero-gradient-text">쇼츠가 뚝딱</span>
           </h1>
           <p className="text-lg mb-10 max-w-xl leading-relaxed" style={{ color: "var(--fg-muted)" }}>
             녹화 파일 또는 유튜브 URL만 넣으세요.
@@ -322,9 +322,9 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-center mb-12">유저 후기</h2>
           <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { name: "정민혁", game: "롤 다이아", text: "매일 3시간씩 편집하던 걸 10분 만에 끝낼 수 있게 됐습니다. 나레이션 퀘리티가 진짜 좋아요.", stars: 5 },
+              { name: "정민혁", game: "롤 다이아", text: "매일 3시간씩 편집하던 걸 10분 만에 끝낼 수 있게 됐습니다. 나레이션 퀄리티가 진짜 좋아요.", stars: 5 },
               { name: "김수연", game: "발로란트", text: "자학개그 톤으로 만든 쇼츠가 10만뷰 찍었어요. AI가 제 실력 수준을 정확히 파악하더라고요 ㅋㅋ", stars: 5 },
-              { name: "박재원", game: "배그 스트리머", text: "유튜브 URL 넣으면 바로 쇼츠 방아주는 게 미쳤습니다. 하이라이트 채널 운영이 너무 편해졌어요.", stars: 5 },
+              { name: "박재원", game: "배그 스트리머", text: "유튜브 URL 넣으면 바로 쇼츠 뽑아주는 게 미쳤습니다. 하이라이트 채널 운영이 너무 편해졌어요.", stars: 5 },
             ].map((t) => (
               <div key={t.name} className="card">
                 <div className="flex gap-0.5 mb-3">
@@ -458,22 +458,22 @@ export default function LandingPage() {
 
       {/* Mobile Bottom Nav */}
       <nav className="mobile-bottom-nav">
-        <a href="/" className="active">
+        <Link href="/" className="active">
           <span className="text-base">🏠</span>
           <span>홈</span>
-        </a>
-        <a href="/studio">
+        </Link>
+        <Link href="/studio">
           <span className="text-base">🎬</span>
           <span>스튜디오</span>
-        </a>
-        <a href="/gallery">
+        </Link>
+        <Link href="/gallery">
           <span className="text-base">🖼️</span>
           <span>갤러리</span>
-        </a>
-        <a href="/pricing">
+        </Link>
+        <Link href="/pricing">
           <span className="text-base">💰</span>
           <span>요금제</span>
-        </a>
+        </Link>
       </nav>
     </main>
   );
