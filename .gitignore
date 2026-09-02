@@ -6,3 +6,9 @@ workdir/
 .env
 .env.local
 .env.production
+
+# 파이프라인 산출물
+/output/
+/data/series/
+/data/upload_log.json
+.remotion/
