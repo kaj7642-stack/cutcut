@@ -2,7 +2,7 @@ import { execFile } from "child_process";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { promisify } from "util";
-import type { VolumeSpike, Clip } from "./types";
+import type { VolumeSpike, Clip } from "../types";
 import { v4 as uuid } from "uuid";
 
 const exec = promisify(execFile);
