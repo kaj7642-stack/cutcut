@@ -6,3 +6,6 @@ workdir/
 .env
 .env.local
 .env.production
+
+data/
+public/anime-uploads/
