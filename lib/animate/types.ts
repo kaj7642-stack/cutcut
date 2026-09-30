@@ -11,7 +11,7 @@ export type CameraDirection =
   | "tracking";
 export type GenerationStatus = "pending" | "generating" | "completed" | "failed";
 export type EpisodeStatus = "draft" | "scripted" | "generating" | "generated" | "rendering" | "completed";
-export type ApiType = "image" | "video" | "tts";
+export type ApiType = "image" | "video" | "tts" | "llm";
 
 export interface AnimProject {
   id: string;

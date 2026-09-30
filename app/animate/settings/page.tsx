@@ -13,9 +13,10 @@ interface Setting {
 }
 
 const API_TYPES = [
-  { key: "image", label: "이미지 생성", icon: "🖼️", providers: ["openai", "stability", "midjourney", "custom"] },
-  { key: "video", label: "영상 생성", icon: "🎬", providers: ["runway", "kling", "pika", "custom"] },
-  { key: "tts", label: "TTS 음성", icon: "🎙️", providers: ["openai", "elevenlabs", "google", "custom"] },
+  { key: "llm", label: "AI 대본/프롬프트 (LLM)", icon: "🧠", providers: ["anthropic", "custom"], defaultModel: "claude-sonnet-5" },
+  { key: "image", label: "이미지 생성", icon: "🖼️", providers: ["openai", "stability", "midjourney", "custom"], defaultModel: "" },
+  { key: "video", label: "영상 생성", icon: "🎬", providers: ["runway", "kling", "pika", "custom"], defaultModel: "" },
+  { key: "tts", label: "TTS 음성", icon: "🎙️", providers: ["openai", "elevenlabs", "google", "custom"], defaultModel: "" },
 ];
 
 export default function SettingsPage() {
@@ -57,7 +58,7 @@ export default function SettingsPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">API 설정</h1>
       <p className="text-sm mb-6" style={{ color: "var(--fg-muted)" }}>
-        이미지/영상 생성, TTS API 키를 설정하세요. API 키가 없으면 Mock(테스트) 모드로 동작합니다.
+        AI 대본 생성, 이미지/영상 생성, TTS API 키를 설정하세요. API 키가 없으면 Mock(테스트) 모드로 동작합니다.
       </p>
 
       <div className="grid gap-6">
@@ -70,7 +71,7 @@ export default function SettingsPage() {
                 <button
                   className="text-sm font-medium px-3 py-1 rounded-lg"
                   style={{ color: "var(--accent)", border: "1px solid var(--accent)" }}
-                  onClick={() => { setForm({ provider: type.providers[0], api_type: type.key, api_key: "", base_url: "", model_name: "", is_active: true, id: "" }); setEditId("new"); }}
+                  onClick={() => { setForm({ provider: type.providers[0], api_type: type.key, api_key: "", base_url: "", model_name: type.defaultModel ?? "", is_active: true, id: "" }); setEditId("new"); }}
                 >
                   + 추가
                 </button>

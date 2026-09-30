@@ -18,17 +18,25 @@ export default function ScriptPage() {
   const [loading, setLoading] = useState(true);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [aiConfigured, setAiConfigured] = useState(false);
+  const [concept, setConcept] = useState("");
+  const [sceneCount, setSceneCount] = useState(5);
+  const [generating, setGenerating] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
 
   const load = useCallback(async () => {
-    const [epRes, charRes] = await Promise.all([
+    const [epRes, charRes, aiRes] = await Promise.all([
       fetch(`/api/animate/episodes/${episodeId}`),
       fetch(`/api/animate/characters?projectId=${projectId}`),
+      fetch("/api/animate/ai/status"),
     ]);
     if (!epRes.ok) { router.push(`/animate/${projectId}`); return; }
     const ep = await epRes.json();
     setEpisode(ep);
     setScript(ep.raw_script || "");
     setCharacters(await charRes.json());
+    const aiStatus = await aiRes.json();
+    setAiConfigured(aiStatus.configured);
     setLoading(false);
   }, [episodeId, projectId, router]);
 
@@ -87,6 +95,23 @@ export default function ScriptPage() {
     router.push(`/animate/${projectId}/episode/${episodeId}/generate`);
   };
 
+  const handleAiGenerate = async () => {
+    if (!concept.trim()) return;
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/animate/ai/generate-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ concept, project_id: projectId, scene_count: sceneCount }),
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      setScript(data.script);
+      setShowAiPanel(false);
+    } catch { alert("AI 대본 생성에 실패했습니다"); }
+    finally { setGenerating(false); }
+  };
+
   const CAMERA_LABELS: Record<string, string> = {
     static: "고정", zoom_in: "줌인", zoom_out: "줌아웃",
     pan_left: "팬 좌", pan_right: "팬 우", pan_up: "팬 상", pan_down: "팬 하", tracking: "트래킹",
@@ -98,7 +123,68 @@ export default function ScriptPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">{episode?.title} - 대본 입력</h2>
+        {aiConfigured && (
+          <button
+            className="text-sm font-medium px-4 py-2 rounded-lg"
+            style={{ background: "linear-gradient(135deg, var(--accent), #a29bfe)", color: "#fff" }}
+            onClick={() => setShowAiPanel(!showAiPanel)}
+          >
+            {showAiPanel ? "직접 작성" : "AI 대본 생성"}
+          </button>
+        )}
       </div>
+
+      {showAiPanel && aiConfigured && (
+        <div className="card mb-4" style={{ borderColor: "var(--accent)" }}>
+          <h3 className="font-semibold mb-3">AI 대본 자동 생성</h3>
+          <p className="text-xs mb-3" style={{ color: "var(--fg-muted)" }}>
+            컨셉을 입력하면 Claude가 등록된 캐릭터를 활용해 대본을 작성합니다
+          </p>
+          <textarea
+            className="w-full px-4 py-3 rounded-lg text-sm resize-none mb-3"
+            style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)", minHeight: 80 }}
+            value={concept}
+            onChange={e => setConcept(e.target.value)}
+            placeholder="예: 전학생이 온 첫 날, 주인공과 우연히 부딪히면서 시작되는 학원 로맨스. 벚꽃 시즌 배경."
+          />
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <span style={{ color: "var(--fg-muted)" }}>씬 수:</span>
+              <input
+                type="number" min={2} max={20}
+                className="w-16 px-2 py-1 rounded text-sm text-center"
+                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--fg)" }}
+                value={sceneCount}
+                onChange={e => setSceneCount(Number(e.target.value) || 5)}
+              />
+            </label>
+            {characters.length > 0 && (
+              <span className="text-xs" style={{ color: "var(--fg-muted)" }}>
+                캐릭터: {characters.map(c => c.name).join(", ")}
+              </span>
+            )}
+            <div className="flex-1" />
+            <button
+              className="btn-primary text-sm"
+              onClick={handleAiGenerate}
+              disabled={!concept.trim() || generating}
+            >
+              {generating ? "생성 중..." : "대본 생성"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!aiConfigured && (
+        <div className="card mb-4 flex items-center gap-3" style={{ borderColor: "var(--border)", opacity: 0.8 }}>
+          <span>🧠</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium">AI 대본 생성 기능 사용 가능</p>
+            <p className="text-xs" style={{ color: "var(--fg-muted)" }}>설정에서 Anthropic API 키를 등록하면 AI가 대본을 자동으로 작성합니다</p>
+          </div>
+          <Link href="/animate/settings" className="text-sm font-medium" style={{ color: "var(--accent)" }}>설정 →</Link>
+        </div>
+      )}
 
       {characters.length === 0 && (
         <div className="card mb-4 flex items-center gap-3" style={{ borderColor: "var(--warning)" }}>

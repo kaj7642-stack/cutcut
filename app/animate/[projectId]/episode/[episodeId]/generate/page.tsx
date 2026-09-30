@@ -21,14 +21,19 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [logView, setLogView] = useState<string | null>(null);
+  const [aiConfigured, setAiConfigured] = useState(false);
+  const [enhancing, setEnhancing] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
-    const [sRes, cRes] = await Promise.all([
+    const [sRes, cRes, aiRes] = await Promise.all([
       fetch(`/api/animate/scenes?episodeId=${episodeId}`),
       fetch(`/api/animate/characters?projectId=${projectId}`),
+      fetch("/api/animate/ai/status"),
     ]);
     setScenes(await sRes.json());
     setCharacters(await cRes.json());
+    const aiStatus = await aiRes.json();
+    setAiConfigured(aiStatus.configured);
     setLoading(false);
   }, [episodeId, projectId]);
 
@@ -63,6 +68,27 @@ export default function GeneratePage() {
     for (const scene of scenes) {
       if (scene.dialogue && !scene.tts_audio_url) await generateTTS(scene.id);
     }
+  };
+
+  const enhanceScene = async (sceneId: string) => {
+    setEnhancing(e => ({ ...e, [sceneId]: true }));
+    try {
+      const res = await fetch("/api/animate/ai/enhance-scene", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scene_id: sceneId, type: "prompt" }),
+      });
+      const data = await res.json();
+      if (data.prompt) {
+        await fetch(`/api/animate/scenes/${sceneId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description: data.prompt }),
+        });
+        load();
+      }
+    } catch { /* ignore */ }
+    setEnhancing(e => ({ ...e, [sceneId]: false }));
   };
 
   const getCharName = (id: string) => characters.find(c => c.id === id)?.name ?? "?";
@@ -143,6 +169,16 @@ export default function GeneratePage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5 flex-shrink-0">
+                  {aiConfigured && (
+                    <button
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                      style={{ background: "linear-gradient(135deg, var(--accent), #a29bfe)", color: "#fff", opacity: enhancing[scene.id] ? 0.5 : 1 }}
+                      onClick={() => enhanceScene(scene.id)}
+                      disabled={enhancing[scene.id] || isGen}
+                    >
+                      {enhancing[scene.id] ? "보강 중..." : "AI 프롬프트"}
+                    </button>
+                  )}
                   <button
                     className="text-xs px-3 py-1.5 rounded-lg font-medium"
                     style={{ background: "var(--accent)", color: "#fff", opacity: isGen ? 0.5 : 1 }}
