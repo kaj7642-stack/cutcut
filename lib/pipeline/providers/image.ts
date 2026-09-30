@@ -7,11 +7,12 @@ import { placeholderImage } from "./png";
  *
  *   IMAGE_PROVIDER=openai     → OpenAI Images (gpt-image-1)
  *   IMAGE_PROVIDER=stability  → Stability AI SD3
+ *   IMAGE_PROVIDER=meshy      → Meshy AI text-to-3D 썸네일
  *   IMAGE_PROVIDER=mock       → 로컬 플레이스홀더 PNG (키 불필요)
  *
  * 미지정 시 사용 가능한 키를 보고 자동 선택하고, 아무것도 없으면 mock으로 떨어진다.
  */
-export type ImageProviderName = "openai" | "stability" | "mock";
+export type ImageProviderName = "openai" | "stability" | "meshy" | "mock";
 
 export interface ImageRequest {
   prompt: string;
@@ -25,10 +26,16 @@ export interface ImageRequest {
 
 export function resolveImageProvider(): ImageProviderName {
   const explicit = process.env.IMAGE_PROVIDER?.toLowerCase();
-  if (explicit === "openai" || explicit === "stability" || explicit === "mock") {
+  if (
+    explicit === "openai" ||
+    explicit === "stability" ||
+    explicit === "meshy" ||
+    explicit === "mock"
+  ) {
     return explicit;
   }
   if (isMockMode()) return "mock";
+  if (process.env.MESHY_API_KEY) return "meshy";
   if (process.env.OPENAI_API_KEY) return "openai";
   if (process.env.STABILITY_API_KEY) return "stability";
   return "mock";
@@ -96,6 +103,76 @@ async function generateStability(req: ImageRequest): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
+const MESHY_BASE = "https://api.meshy.ai/openapi/v2/text-to-3d";
+const MESHY_POLL_INTERVAL = 3_000;
+const MESHY_TIMEOUT = 300_000;
+
+async function generateMeshy(req: ImageRequest): Promise<Buffer> {
+  const key = process.env.MESHY_API_KEY;
+  if (!key) throw new Error("MESHY_API_KEY가 설정되어 있지 않습니다.");
+
+  const headers = { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+
+  const createRes = await fetch(MESHY_BASE, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      mode: "preview",
+      prompt: req.prompt,
+      ai_model: process.env.MESHY_MODEL || "meshy-7.1",
+      alpha_thumbnail: true,
+      art_style: process.env.MESHY_ART_STYLE || "realistic",
+      target_formats: ["glb"],
+    }),
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!createRes.ok) {
+    const detail = await createRes.text().catch(() => "");
+    throw new Error(`Meshy 태스크 생성 실패 (${createRes.status}). ${detail.slice(0, 300)}`);
+  }
+
+  const { result: taskId } = (await createRes.json()) as { result: string };
+  if (!taskId) throw new Error("Meshy 태스크 ID를 받지 못했습니다.");
+
+  const deadline = Date.now() + MESHY_TIMEOUT;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, MESHY_POLL_INTERVAL));
+
+    const pollRes = await fetch(`${MESHY_BASE}/${taskId}`, {
+      headers: { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!pollRes.ok) {
+      const detail = await pollRes.text().catch(() => "");
+      throw new Error(`Meshy 폴링 실패 (${pollRes.status}). ${detail.slice(0, 300)}`);
+    }
+
+    const task = (await pollRes.json()) as {
+      status: string;
+      thumbnail_url?: string;
+      alpha_thumbnail_url?: string;
+      model_urls?: { glb?: string };
+      task_error?: { message?: string };
+    };
+
+    if (task.status === "SUCCEEDED") {
+      const thumbUrl = task.alpha_thumbnail_url || task.thumbnail_url;
+      if (!thumbUrl) throw new Error("Meshy 썸네일 URL이 없습니다.");
+
+      const img = await fetch(thumbUrl, { signal: AbortSignal.timeout(60_000) });
+      if (!img.ok) throw new Error(`Meshy 썸네일 다운로드 실패 (${img.status}).`);
+      return Buffer.from(await img.arrayBuffer());
+    }
+
+    if (task.status === "FAILED" || task.status === "CANCELED") {
+      const msg = task.task_error?.message || task.status;
+      throw new Error(`Meshy 3D 생성 실패: ${msg}`);
+    }
+  }
+  throw new Error("Meshy 3D 생성 타임아웃 (5분 초과).");
+}
+
 /** 지수 백오프 재시도를 포함한 이미지 1장 생성. */
 export async function generateImage(
   req: ImageRequest,
@@ -116,7 +193,11 @@ export async function generateImage(
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const bytes =
-        provider === "openai" ? await generateOpenAI(req) : await generateStability(req);
+        provider === "meshy"
+          ? await generateMeshy(req)
+          : provider === "openai"
+            ? await generateOpenAI(req)
+            : await generateStability(req);
       await writeFile(req.outputPath, bytes);
       return { provider, path: req.outputPath };
     } catch (err) {
